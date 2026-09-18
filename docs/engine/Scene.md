@@ -2,7 +2,7 @@
 
 `Scene` is a container for game objects. Engine calls the active Scene once per frame, and Scene forwards the update and render calls to its entities.
 
-Source: [Scene.ts](../src/engine/scene/Scene.ts).
+Source: [Scene.ts](../../src/engine/scene/Scene.ts).
 
 ## API
 
@@ -71,6 +71,6 @@ Request the next animation frame
 
 Entities can read [Input](Input.md) during update, including one-frame presses. Cleanup happens after rendering. If update or rendering throws, Engine stops, clears input and timing state, and rethrows the error.
 
-Scene does not own Input, Time, Renderer, or an animation loop. GameScene creates Player using explicitly supplied Input and centers it using logical dimensions. There is no SceneManager, scene stack, or automatic entity removal. See [Player and GameScene](Player.md) for the playable demo.
+Scene does not own Input, Time, Renderer, or an animation loop. GameScene creates Player using explicitly supplied Input and centers it using logical dimensions. There is no SceneManager, scene stack, or automatic entity removal. See [Player and GameScene](../game/Player.md) for the playable demo.
 
 See [Entity](Entity.md) for game objects and [Engine](Engine.md) for lifecycle details.

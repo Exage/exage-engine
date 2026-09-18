@@ -2,7 +2,7 @@
 
 `Time` measures the interval between animation frames. Game objects will use that interval to move a distance per second instead of a distance per frame.
 
-Source: [Time.ts](../src/engine/core/Time.ts). Engine owns an instance at `engine.time`.
+Source: [Time.ts](../../src/engine/core/Time.ts). Engine owns an instance at `engine.time`.
 
 ## API and units
 
@@ -48,7 +48,7 @@ position.x += 200 * dt
 
 At 60 FPS, one frame moves approximately 3.33 pixels. At 30 FPS, one frame moves approximately 6.67 pixels. Over one second of regular frames, both travel approximately 200 pixels.
 
-Player uses this formula with a normalized WASD direction; see [Player and GameScene](Player.md).
+Player uses this formula with a normalized WASD direction; see [Player and GameScene](../game/Player.md).
 
 ## Long frames and FPS
 

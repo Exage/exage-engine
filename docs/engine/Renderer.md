@@ -2,7 +2,7 @@
 
 `Renderer` draws rectangles and text through Canvas 2D. It owns the Canvas and its rendering context, keeping direct Canvas calls out of gameplay.
 
-Source: [Renderer.ts](../src/engine/rendering/Renderer.ts).
+Source: [Renderer.ts](../../src/engine/rendering/Renderer.ts).
 
 ## API
 
@@ -68,8 +68,8 @@ The buffer is resized only when its dimensions change. Gameplay does not need to
 
 ## CSS size
 
-Renderer sets a logical CSS width, automatic height, and the Canvas aspect ratio. It also sets `--canvas-aspect-ratio`, which [style.css](../src/style.css) uses to fit the Canvas inside the viewport.
+Renderer sets a logical CSS width, automatic height, and the Canvas aspect ratio. It also sets `--canvas-aspect-ratio`, which [style.css](../../src/style.css) uses to fit the Canvas inside the viewport.
 
 CSS can shrink the displayed Canvas without changing logical coordinates. Backing resolution is based on logical dimensions and DPI, not the measured CSS display size. There is currently no public API for changing logical resolution after construction.
 
-Sprites, cameras, rotation and scale APIs, layers, WebGL, and multiple graphics backends are outside the current implementation. See [Architecture](Architecture.md) for ownership rules.
+Sprites, cameras, rotation and scale APIs, layers, WebGL, and multiple graphics backends are outside the current implementation. See [Architecture](../Architecture.md) for ownership rules.

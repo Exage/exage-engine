@@ -74,15 +74,15 @@ The [devLog](../src/utils/devLog.ts) helper uses this value to suppress its outp
 
 ## Where to go next
 
-- [Engine](Engine.md): startup, shutdown, and the frame loop.
-- [Time](Time.md): delta time, FPS, and focus recovery.
-- [Input](Input.md): held keys and per-frame transitions.
-- [Vector2](Vector2.md): positions, directions, and normalized movement.
-- [Transform](Transform.md): object position, rotation, and scale.
-- [Player and GameScene](Player.md): WASD controls and the playable demo.
-- [Debug Overlay](Debug%20Overlay.md): live timing, entity count, and player position.
-- [Scene](Scene.md): entity containers and connection to Engine.
-- [Entity](Entity.md): the base game object and its update and render methods.
-- [Renderer](Renderer.md): drawing, text, and display density.
+- [Engine](engine/Engine.md): startup, shutdown, and the frame loop.
+- [Time](engine/Time.md): delta time, FPS, and focus recovery.
+- [Input](engine/Input.md): held keys and per-frame transitions.
+- [Vector2](engine/Vector2.md): positions, directions, and normalized movement.
+- [Transform](engine/Transform.md): object position, rotation, and scale.
+- [Player and GameScene](game/Player.md): WASD controls and the playable demo.
+- [Debug Overlay](game/Debug%20Overlay.md): live timing, entity count, and player position.
+- [Scene](engine/Scene.md): entity containers and connection to Engine.
+- [Entity](engine/Entity.md): the base game object and its update and render methods.
+- [Renderer](engine/Renderer.md): drawing, text, and display density.
 - [Architecture](Architecture.md): current structure and dependency rules.
 - [First Motion roadmap](First%20Motion%20%E2%80%94%20Engine%20v0.1%20Roadmap.md): planned work and completion criteria.

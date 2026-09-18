@@ -72,7 +72,7 @@ Browser keyboard events update Input. On an animation callback, Engine updates T
 
 Engine manages startup, shutdown, and timing resets on focus changes. Input manages its keyboard and focus-loss listeners. Renderer checks display density when clearing. The individual systems do not need to know about Player or other game-specific types.
 
-See [Engine](Engine.md), [Input](Input.md), [Time](Time.md), and [Renderer](Renderer.md) for exact APIs and lifecycle behavior. [Vector2](Vector2.md) explains positions, directions, and movement math. [Transform](Transform.md) groups position, rotation, and scale. [Entity](Entity.md) owns a Transform and provides overridable update and render methods.
+See [Engine](engine/Engine.md), [Input](engine/Input.md), [Time](engine/Time.md), and [Renderer](engine/Renderer.md) for exact APIs and lifecycle behavior. [Vector2](engine/Vector2.md) explains positions, directions, and movement math. [Transform](engine/Transform.md) groups position, rotation, and scale. [Entity](engine/Entity.md) owns a Transform and provides overridable update and render methods.
 
 ## Units
 
@@ -97,6 +97,6 @@ Engine → Scene → Entity
                 Player
 ```
 
-Player inherits from Entity and receives Input explicitly. Engine updates and renders its active Scene without knowing about Player. [Scene](Scene.md) forwards those calls to its entities. Application setup constructs GameScene with Input, a readonly timing view for diagnostics, and logical dimensions, then attaches it through `engine.setScene(scene)`. See [Player and GameScene](Player.md).
+Player inherits from Entity and receives Input explicitly. Engine updates and renders its active Scene without knowing about Player. [Scene](engine/Scene.md) forwards those calls to its entities. Application setup constructs GameScene with Input, a readonly timing view for diagnostics, and logical dimensions, then attaches it through `engine.setScene(scene)`. See [Player and GameScene](game/Player.md).
 
 First Motion uses this small inheritance-based design. ECS, components, physics, collisions, cameras, sprites, and multiple rendering backends remain outside v0.1. See the [roadmap](First%20Motion%20%E2%80%94%20Engine%20v0.1%20Roadmap.md) for the complete scope.

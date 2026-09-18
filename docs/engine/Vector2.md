@@ -2,7 +2,7 @@
 
 `Vector2` groups two numbers, `x` and `y`, and provides common operations on them. Game code can work with a position or direction as one value instead of repeatedly calculating both coordinates separately.
 
-Source: [Vector2.ts](../src/engine/math/Vector2.ts).
+Source: [Vector2.ts](../../src/engine/math/Vector2.ts).
 
 ## Position and direction
 
@@ -74,7 +74,7 @@ Normalize a **direction**, not the player's position: normalizing a position wou
 
 ## Movement with Input and delta time
 
-This standalone function illustrates the movement calculation used by [Player](Player.md). The application uses Player.update() through GameScene; it does not call this example function.
+This standalone function illustrates the movement calculation used by [Player](../game/Player.md). The application uses Player.update() through GameScene; it does not call this example function.
 
 ```ts
 import { Vector2 } from '@/engine'
@@ -109,4 +109,4 @@ The steps are: read the keys, build a direction, normalize it, multiply it by th
 
 Here `displacement` refers to the same object as `direction`, which is safe because the original direction is no longer needed. At 200 logical pixels per second and `dt = 0.5` seconds, the displacement has length 100 pixels for both straight and diagonal movement. With no keys held, or with opposing keys cancelling each other, the position stays unchanged.
 
-See [Input](Input.md) for keyboard states, [Time](Time.md) for delta time, and [Architecture](Architecture.md) for how future game objects will use these primitives.
+See [Input](Input.md) for keyboard states, [Time](Time.md) for delta time, and [Architecture](../Architecture.md) for how future game objects will use these primitives.

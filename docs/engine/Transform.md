@@ -2,7 +2,7 @@
 
 `Transform` groups an object's position, rotation, and scale. It describes where an object is and how it is oriented and sized.
 
-Source: [Transform.ts](../src/engine/entities/Transform.ts).
+Source: [Transform.ts](../../src/engine/entities/Transform.ts).
 
 ## Properties
 
@@ -42,4 +42,4 @@ Transform only stores data. It does not move an object automatically, draw anyth
 
 For v0.1, gameplay will actively use position. Rotation and scale are stored for the basic representation; changing them currently has no automatic visual effect.
 
-The [Entity](Entity.md) class owns a Transform, making an object's position accessible through `entity.transform.position`. Player uses this position for movement and rendering. See [Architecture](Architecture.md) for the relationships.
+The [Entity](Entity.md) class owns a Transform, making an object's position accessible through `entity.transform.position`. Player uses this position for movement and rendering. See [Architecture](../Architecture.md) for the relationships.

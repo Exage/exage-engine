@@ -2,11 +2,11 @@
 
 The First Motion demo displays a 40 × 40 logical-pixel blue rectangle controlled with WASD. It starts at the center of the logical viewport and moves at 200 logical pixels per second.
 
-Sources: [Player.ts](../src/game/entities/Player.ts), [GameScene.ts](../src/game/scenes/GameScene.ts), and [main.ts](../src/main.ts).
+Sources: [Player.ts](../../src/game/entities/Player.ts), [GameScene.ts](../../src/game/scenes/GameScene.ts), and [main.ts](../../src/main.ts).
 
 ## Player
 
-`Player` extends [Entity](Entity.md) and receives [Input](Input.md) through its constructor. It uses its inherited Transform for position. It does not receive Engine, Time, Canvas, or a browser event.
+`Player` extends [Entity](../engine/Entity.md) and receives [Input](../engine/Input.md) through its constructor. It uses its inherited Transform for position. It does not receive Engine, Time, Canvas, or a browser event.
 
 | Key        | Direction |
 | ---------- | --------- |

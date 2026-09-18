@@ -2,7 +2,7 @@
 
 `Input` remembers which keyboard keys are held, pressed, or released. Game code reads this state instead of handling browser keyboard events directly.
 
-`Engine` owns one instance, available as `engine.input`. The implementation is in [Input.ts](../src/engine/input/Input.ts).
+`Engine` owns one instance, available as `engine.input`. The implementation is in [Input.ts](../../src/engine/input/Input.ts).
 
 ## Reading keyboard state
 

@@ -15,4 +15,4 @@ The display updates every rendered frame, after movement. FPS is not smoothed. F
 
 All panel coordinates use logical pixels, so Renderer handles DPI automatically. The panel is drawn on top of entities and stays visible if Player moves behind it. It is always enabled, including production builds; there is no toggle yet. Formatting only affects the text, not the actual position or timing values.
 
-Source: [GameScene.ts](../src/game/scenes/GameScene.ts). See [Time](Time.md), [Renderer](Renderer.md), and [Player and GameScene](Player.md) for related behavior.
+Source: [GameScene.ts](../../src/game/scenes/GameScene.ts). See [Time](../engine/Time.md), [Renderer](../engine/Renderer.md), and [Player and GameScene](Player.md) for related behavior.

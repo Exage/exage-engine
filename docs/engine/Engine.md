@@ -2,7 +2,7 @@
 
 `Engine` creates the core systems and runs the browser animation loop. It coordinates work; it does not implement player movement or other gameplay.
 
-Source: [Engine.ts](../src/engine/core/Engine.ts).
+Source: [Engine.ts](../../src/engine/core/Engine.ts).
 
 ## Creating an engine
 
@@ -75,4 +75,4 @@ if (import.meta.hot) {
 }
 ```
 
-This avoids leaving an old loop and listeners active during development. See [Getting Started](Getting%20Started.md) for launch commands and [Architecture](Architecture.md) for dependency boundaries.
+This avoids leaving an old loop and listeners active during development. See [Getting Started](../Getting%20Started.md) for launch commands and [Architecture](../Architecture.md) for dependency boundaries.

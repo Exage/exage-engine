@@ -2,7 +2,7 @@
 
 `Entity` is the base class for an object in the game world. It groups a Transform with two methods that subclasses can override: one for gameplay updates and one for drawing.
 
-Source: [Entity.ts](../src/engine/entities/Entity.ts).
+Source: [Entity.ts](../../src/engine/entities/Entity.ts).
 
 ## API
 
@@ -47,4 +47,4 @@ Entity does not own a game loop, subscribe to browser events, or retain a Render
 
 [Scene](Scene.md) calls `update(dt)` and `render(renderer)` on its entities. Register an object with `scene.add(entity)` and select the scene through `engine.setScene(scene)`. Creating an Entity alone does not display it; it needs rendering behavior and membership in the active scene.
 
-IDs, automatic removal, collision, physics, components, and parent-child relationships are not part of this base class. See [Architecture](Architecture.md) for the dependency chain and [Renderer](Renderer.md) for drawing methods.
+IDs, automatic removal, collision, physics, components, and parent-child relationships are not part of this base class. See [Architecture](../Architecture.md) for the dependency chain and [Renderer](Renderer.md) for drawing methods.
