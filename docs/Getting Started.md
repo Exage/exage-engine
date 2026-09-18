@@ -73,6 +73,7 @@ The [devLog](../src/utils/devLog.ts) helper uses this value to suppress its outp
 - [Engine](Engine.md): startup, shutdown, and the frame loop.
 - [Time](Time.md): delta time, FPS, and focus recovery.
 - [Input](Input.md): held keys and per-frame transitions.
+- [Vector2](Vector2.md): positions, directions, and normalized movement.
 - [Renderer](Renderer.md): drawing, text, and display density.
 - [Architecture](Architecture.md): current structure and dependency rules.
 - [First Motion roadmap](First%20Motion%20%E2%80%94%20Engine%20v0.1%20Roadmap.md): planned work and completion criteria.
