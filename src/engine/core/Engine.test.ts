@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Engine } from '@/engine/core/Engine'
+import { Scene } from '@/engine/scene/Scene'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -35,6 +36,110 @@ function setup() {
 }
 
 describe('Engine lifecycle', () => {
+  it('updates the active scene before clearing and rendering, then ends input', () => {
+    const { engine, frame, clearRect, windowTarget } = setup()
+    const scene = new Scene()
+    const calls: string[] = []
+    const update = vi.spyOn(scene, 'update').mockImplementation((dt) => {
+      calls.push('update')
+      expect(dt).toBeCloseTo(0.02)
+      expect(engine.time.deltaTime).toBeCloseTo(dt)
+      expect(engine.input.wasPressed('KeyD')).toBe(true)
+    })
+    const render = vi.spyOn(scene, 'render').mockImplementation((renderer) => {
+      calls.push('render')
+      expect(renderer.width).toBe(1280)
+      expect(engine.input.wasPressed('KeyD')).toBe(true)
+    })
+    engine.start()
+    frame(0)
+    engine.setScene(scene)
+    clearRect.mockImplementation(() => calls.push('clear'))
+    windowTarget.dispatchEvent(Object.assign(new Event('keydown'), { code: 'KeyD' }))
+    frame(20)
+    expect(calls).toEqual(['update', 'clear', 'render'])
+    expect(engine.input.wasPressed('KeyD')).toBe(false)
+    expect(engine.input.isDown('KeyD')).toBe(true)
+    engine.setScene(null)
+    frame(40)
+    expect(update).toHaveBeenCalledTimes(1)
+    expect(render).toHaveBeenCalledTimes(1)
+    expect(calls).toEqual(['update', 'clear', 'render', 'clear'])
+    engine.stop()
+  })
+
+  it('uses one scene throughout a frame and preserves the selected scene across restart', () => {
+    const { engine, frame } = setup()
+    const first = new Scene()
+    const second = new Scene()
+    vi.spyOn(first, 'update').mockImplementation(() => engine.setScene(second))
+    const firstRender = vi.spyOn(first, 'render')
+    const secondUpdate = vi.spyOn(second, 'update')
+    const secondRender = vi.spyOn(second, 'render')
+    engine.setScene(first)
+    engine.start()
+    frame(0)
+    expect(firstRender).toHaveBeenCalledTimes(1)
+    expect(secondRender).not.toHaveBeenCalled()
+    frame(20)
+    expect(secondUpdate).toHaveBeenLastCalledWith(0.02)
+    expect(secondRender).toHaveBeenCalledTimes(1)
+    engine.stop()
+    engine.start()
+    frame(10000)
+    expect(secondUpdate).toHaveBeenLastCalledWith(0)
+    expect(secondRender).toHaveBeenCalledTimes(2)
+    engine.stop()
+  })
+
+  it.each(['update', 'render'] as const)('cleans up when scene %s fails', (method) => {
+    const { engine, frame, pending, windowTarget } = setup()
+    const scene = new Scene()
+    vi.spyOn(scene, method).mockImplementation(() => {
+      throw new Error('Scene failed')
+    })
+    engine.setScene(scene)
+    engine.start()
+    windowTarget.dispatchEvent(Object.assign(new Event('keydown'), { code: 'KeyD' }))
+    expect(() => frame(0)).toThrow('Scene failed')
+    expect(engine.isRunning).toBe(false)
+    expect(engine.input.isDown('KeyD')).toBe(false)
+    expect(pending.size).toBe(0)
+  })
+
+  it.each(['update', 'render'] as const)(
+    'does not schedule another frame after stopping in %s',
+    (method) => {
+      const { engine, frame, pending } = setup()
+      const scene = new Scene()
+      vi.spyOn(scene, method).mockImplementation(() => engine.stop())
+      engine.setScene(scene)
+      engine.start()
+      frame(0)
+      expect(engine.isRunning).toBe(false)
+      expect(pending.size).toBe(0)
+    }
+  )
+
+  it('keeps a single loop when a scene stops and restarts the engine', () => {
+    const { engine, frame, pending } = setup()
+    const scene = new Scene()
+    vi.spyOn(scene, 'update').mockImplementationOnce(() => {
+      engine.stop()
+      engine.start()
+    })
+    const render = vi.spyOn(scene, 'render')
+    engine.setScene(scene)
+    engine.start()
+    frame(0)
+    expect(pending.size).toBe(1)
+    expect(render).not.toHaveBeenCalled()
+    frame(20)
+    expect(pending.size).toBe(1)
+    expect(render).toHaveBeenCalledTimes(1)
+    engine.stop()
+  })
+
   it('keeps input transitions through rendering and clears them at frame end', () => {
     const { engine, frame, clearRect, windowTarget } = setup()
     const press = () => {

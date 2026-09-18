@@ -74,7 +74,7 @@ Normalize a **direction**, not the player's position: normalizing a position wou
 
 ## Movement with Input and delta time
 
-This function illustrates future gameplay. Player and Scene are not implemented yet, and this example is not connected to the current Engine loop.
+This function illustrates future gameplay. Player is not implemented yet, and this example is not connected to the current Engine loop.
 
 ```ts
 import { Vector2 } from '@/engine'

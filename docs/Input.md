@@ -38,21 +38,14 @@ Browser events update Input between frames. The current Engine frame runs in thi
 
 ```text
 Time.update(timestamp)
-Renderer.clear()
-Input.endFrame()
-Request the next animation frame
-```
-
-Scene updates and rendering are not implemented yet. Once added, gameplay must read Input before `endFrame()`, with cleanup following scene rendering:
-
-```text
-Time.update(timestamp)
 Scene.update(dt)          ← Read Input here
 Renderer.clear()
 Scene.render(renderer)
 Input.endFrame()
 Request the next animation frame
 ```
+
+Scene calls run when a scene is selected through `engine.setScene(scene)`. Gameplay reads Input before `endFrame()`, with cleanup following scene rendering.
 
 Game objects should receive only the dependencies they need, such as `Input`, and should not call `start()`, `stop()`, or `endFrame()` themselves. Engine manages those methods.
 

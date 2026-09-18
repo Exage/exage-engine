@@ -1,6 +1,7 @@
 import { Time } from '@/engine/core/Time'
 import { Input } from '@/engine/input/Input'
 import { Renderer } from '@/engine/rendering/Renderer'
+import type { Scene } from '@/engine/scene/Scene'
 
 export interface EngineOptions {
   canvas: HTMLCanvasElement
@@ -14,6 +15,7 @@ export class Engine {
   readonly time = new Time()
   readonly input = new Input()
   private readonly renderer: Renderer
+  private scene: Scene | null = null
   private frameId: number | null = null
 
   constructor({ canvas, width, height }: EngineOptions) {
@@ -26,6 +28,11 @@ export class Engine {
 
   get isRunning(): boolean {
     return this.frameId !== null
+  }
+
+  /** Select the scene for subsequent frames, or null to clear it. */
+  setScene(scene: Scene | null): void {
+    this.scene = scene
   }
 
   start(): void {
@@ -66,8 +73,22 @@ export class Engine {
     }
 
     try {
+      const frameId = this.frameId
+      const scene = this.scene
       this.time.update(timestamp)
+      scene?.update(this.time.deltaTime)
+
+      if (this.frameId !== frameId) {
+        return
+      }
+
       this.renderer.clear()
+      scene?.render(this.renderer)
+
+      if (this.frameId !== frameId) {
+        return
+      }
+
       this.input.endFrame()
       this.frameId = requestAnimationFrame(this.frame)
     } catch (error) {

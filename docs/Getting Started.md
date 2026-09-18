@@ -1,6 +1,6 @@
 # Getting Started
 
-The project currently runs an empty Canvas through its own Engine loop. Time, keyboard Input, and basic Renderer APIs are implemented. A movable Player, Scene, and debug overlay are still planned.
+The project currently runs an empty Canvas through its own Engine loop. Time, keyboard Input, and basic Renderer APIs are implemented. Scene and Entity are available, but the entry point does not attach a scene yet. A movable Player, GameScene, and debug overlay are still planned.
 
 ## Requirements
 
@@ -75,6 +75,7 @@ The [devLog](../src/utils/devLog.ts) helper uses this value to suppress its outp
 - [Input](Input.md): held keys and per-frame transitions.
 - [Vector2](Vector2.md): positions, directions, and normalized movement.
 - [Transform](Transform.md): object position, rotation, and scale.
+- [Scene](Scene.md): entity containers and connection to Engine.
 - [Entity](Entity.md): the base game object and its update and render methods.
 - [Renderer](Renderer.md): drawing, text, and display density.
 - [Architecture](Architecture.md): current structure and dependency rules.

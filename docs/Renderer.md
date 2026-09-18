@@ -39,7 +39,7 @@ renderer.drawText('Hello', 16, 16, { fontSize: 20, color: '#ffffff' })
 
 Clear before drawing a new frame. Later draws can cover earlier ones. `clear()` removes Canvas pixels; it does not paint a background color. The current application's background comes from CSS.
 
-Engine's Renderer is private. Scene rendering is not implemented yet; future entities will receive a Renderer through their render method.
+Engine's Renderer is private. The active [Scene](Scene.md) receives it during rendering and passes it to each entity's render method.
 
 ## Text options
 
