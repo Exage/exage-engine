@@ -42,4 +42,4 @@ Transform only stores data. It does not move an object automatically, draw anyth
 
 For v0.1, gameplay will actively use position. Rotation and scale are stored for the basic representation; changing them currently has no automatic visual effect.
 
-The planned Entity class will own a Transform, making an object's position accessible through `entity.transform.position`. Entity and Player are not implemented yet. See [Architecture](Architecture.md) for the planned relationships.
+The [Entity](Entity.md) class owns a Transform, making an object's position accessible through `entity.transform.position`. Player is not implemented yet. See [Architecture](Architecture.md) for the planned relationships.

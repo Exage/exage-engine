@@ -19,6 +19,7 @@ src/
     math/
       Vector2.ts            Mutable 2D vectors and direction normalization
     entities/
+      Entity.ts             Base game object with update and render methods
       Transform.ts          Position, rotation, and scale of a game object
     rendering/
       Renderer.ts           Owns Canvas and performs drawing
@@ -26,7 +27,7 @@ src/
     devLog.ts               Development-only logging helper
 ```
 
-Tests live alongside their implementations. `src/game/`, the Entity class, and scenes have not been implemented yet.
+Tests live alongside their implementations. `src/game/` and scenes have not been implemented yet.
 
 ## Ownership
 
@@ -52,7 +53,7 @@ Engine publicly exposes readonly references to Time and Input. Its Renderer is p
 - Future game objects should receive only required dependencies, such as Input through a constructor and delta time through `update(dt)`.
 - Gameplay should draw through Renderer instead of using Canvas APIs directly.
 
-Public exports currently include `Engine`, `EngineOptions`, `Time`, `Input`, `Vector2`, `Transform`, `Renderer`, and `TextOptions`.
+Public exports currently include `Engine`, `EngineOptions`, `Time`, `Input`, `Vector2`, `Transform`, `Entity`, `Renderer`, and `TextOptions`.
 
 `Vector2` stores public `x` and `y` coordinates, both zero by default. `set(x, y)`, `add(vector)`, `subtract(vector)`, `multiply(scalar)`, and `normalize()` mutate the instance and return it for chaining. `clone()` creates an independent copy; `length()` returns its Euclidean length. Normalizing a zero vector leaves it unchanged. Clone a direction before scaling it if its original value must be preserved.
 
@@ -62,7 +63,7 @@ Browser keyboard events update Input. On an animation callback, Engine updates T
 
 Engine manages startup, shutdown, and timing resets on focus changes. Input manages its keyboard and focus-loss listeners. Renderer checks display density when clearing. The individual systems do not need to know about Player or other game-specific types.
 
-See [Engine](Engine.md), [Input](Input.md), [Time](Time.md), and [Renderer](Renderer.md) for exact APIs and lifecycle behavior. [Vector2](Vector2.md) explains positions, directions, and movement math. [Transform](Transform.md) groups position, rotation, and scale for future entities.
+See [Engine](Engine.md), [Input](Input.md), [Time](Time.md), and [Renderer](Renderer.md) for exact APIs and lifecycle behavior. [Vector2](Vector2.md) explains positions, directions, and movement math. [Transform](Transform.md) groups position, rotation, and scale. [Entity](Entity.md) owns a Transform and provides overridable update and render methods.
 
 ## Units
 
@@ -79,7 +80,7 @@ DPI and physical Canvas pixels remain a Renderer concern.
 
 ## Planned extension
 
-With `Vector2` and `Transform` implemented, the remaining foundations are `Entity`, `Scene`, `Player`, and `GameScene`. The intended relationship is:
+With `Vector2`, `Transform`, and `Entity` implemented, the remaining foundations are `Scene`, `Player`, and `GameScene`. The intended relationship is:
 
 ```text
 Engine → Scene → Entity
