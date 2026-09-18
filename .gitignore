@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Tests
+coverage/
+
+# Tool caches
+.vite/
+.vitest/
+.eslintcache
+.prettiercache
+
+# Local environment variables
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# OS
+.DS_Store
+Thumbs.db
