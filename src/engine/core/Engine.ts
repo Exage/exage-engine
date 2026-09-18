@@ -1,4 +1,5 @@
 import { Time } from '@/engine/core/Time'
+import { Input } from '@/engine/input/Input'
 import { Renderer } from '@/engine/rendering/Renderer'
 
 export interface EngineOptions {
@@ -11,6 +12,7 @@ export interface EngineOptions {
 
 export class Engine {
   readonly time = new Time()
+  readonly input = new Input()
   private readonly renderer: Renderer
   private frameId: number | null = null
 
@@ -32,6 +34,7 @@ export class Engine {
     }
 
     this.time.reset()
+    this.input.start()
     window.addEventListener('blur', this.resetTime)
     window.addEventListener('focus', this.resetTime)
     document.addEventListener('visibilitychange', this.resetTime)
@@ -46,6 +49,7 @@ export class Engine {
 
     cancelAnimationFrame(this.frameId)
     this.frameId = null
+    this.input.stop()
     window.removeEventListener('blur', this.resetTime)
     window.removeEventListener('focus', this.resetTime)
     document.removeEventListener('visibilitychange', this.resetTime)
@@ -64,6 +68,7 @@ export class Engine {
     try {
       this.time.update(timestamp)
       this.renderer.clear()
+      this.input.endFrame()
       this.frameId = requestAnimationFrame(this.frame)
     } catch (error) {
       this.stop()

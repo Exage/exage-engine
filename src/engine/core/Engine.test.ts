@@ -35,6 +35,32 @@ function setup() {
 }
 
 describe('Engine lifecycle', () => {
+  it('keeps input transitions through rendering and clears them at frame end', () => {
+    const { engine, frame, clearRect, windowTarget } = setup()
+    const press = () => {
+      windowTarget.dispatchEvent(Object.assign(new Event('keydown'), { code: 'KeyD' }))
+    }
+    press()
+    expect(engine.input.isDown('KeyD')).toBe(false)
+    engine.start()
+    press()
+    clearRect.mockImplementation(() => {
+      expect(engine.input.wasPressed('KeyD')).toBe(true)
+    })
+    frame(0)
+    expect(engine.input.wasPressed('KeyD')).toBe(false)
+    expect(engine.input.isDown('KeyD')).toBe(true)
+    engine.stop()
+    expect(engine.input.isDown('KeyD')).toBe(false)
+    press()
+    expect(engine.input.isDown('KeyD')).toBe(false)
+    engine.start()
+    press()
+    frame(10000)
+    expect(engine.input.wasPressed('KeyD')).toBe(false)
+    engine.stop()
+  })
+
   it('updates time before rendering and resets it on restart', () => {
     const { engine, frame, clearRect } = setup()
     engine.start()
@@ -103,11 +129,15 @@ describe('Engine lifecycle', () => {
       throw new Error('Render failed')
     })
     engine.start()
+    window.dispatchEvent(Object.assign(new Event('keydown'), { code: 'KeyD' }))
     const callback = pending.get(0)!
     pending.delete(0)
     expect(() => callback(0)).toThrow('Render failed')
     expect(engine.isRunning).toBe(false)
     expect(pending.size).toBe(0)
+    expect(engine.input.isDown('KeyD')).toBe(false)
+    window.dispatchEvent(Object.assign(new Event('keydown'), { code: 'KeyD' }))
+    expect(engine.input.isDown('KeyD')).toBe(false)
   })
 
   it('rejects invalid dimensions and unavailable Canvas 2D', () => {

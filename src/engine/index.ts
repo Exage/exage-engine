@@ -1,5 +1,6 @@
 export { Engine } from '@/engine/core/Engine'
 export type { EngineOptions } from '@/engine/core/Engine'
 export { Time } from '@/engine/core/Time'
+export { Input } from '@/engine/input/Input'
 export { Renderer } from '@/engine/rendering/Renderer'
 export type { TextOptions } from '@/engine/rendering/Renderer'

@@ -1,0 +1,86 @@
+# Architecture
+
+The project separates reusable engine systems from application setup and future gameplay. The current implementation provides a browser loop, timing, keyboard input, and Canvas 2D rendering.
+
+## Current structure
+
+```text
+index.html                  Canvas element and application entry script
+src/
+  main.ts                   Creates and starts Engine; handles hot-reload cleanup
+  style.css                 Page and Canvas layout
+  engine/
+    index.ts                Public engine exports
+    core/
+      Engine.ts             Owns systems and coordinates frames
+      Time.ts               Calculates delta time and FPS
+    input/
+      Input.ts              Tracks keyboard state
+    rendering/
+      Renderer.ts           Owns Canvas and performs drawing
+  utils/
+    devLog.ts               Development-only logging helper
+```
+
+Tests live alongside their implementations. `src/game/`, math primitives, entities, and scenes have not been implemented yet.
+
+## Ownership
+
+```text
+main.ts
+  → Engine
+      ├── Time
+      ├── Input
+      └── Renderer
+            ├── HTMLCanvasElement
+            └── CanvasRenderingContext2D
+```
+
+`main.ts` locates the Canvas and passes it into Engine. Engine creates Renderer and does not store its own Canvas reference. Renderer alone retains the Canvas and context for rendering.
+
+Engine publicly exposes readonly references to Time and Input. Its Renderer is private. Each Engine instance owns its own system instances; there is no global engine singleton.
+
+## Dependency boundaries
+
+- Engine code must not import game code or `main.ts`. ESLint enforces this for imports covered by its configured restrictions.
+- Application and future game code can import the public engine API from `@/engine`.
+- Internal project imports should prefer the `@/` alias, which maps to `src/` in TypeScript and Vite.
+- Future game objects should receive only required dependencies, such as Input through a constructor and delta time through `update(dt)`.
+- Gameplay should draw through Renderer instead of using Canvas APIs directly.
+
+Public exports currently include `Engine`, `EngineOptions`, `Time`, `Input`, `Renderer`, and `TextOptions`.
+
+## Frame coordination
+
+Browser keyboard events update Input. On an animation callback, Engine updates Time, clears Renderer, ends the Input frame, and requests the next callback. There is no gameplay update in this loop yet.
+
+Engine manages startup, shutdown, and timing resets on focus changes. Input manages its keyboard and focus-loss listeners. Renderer checks display density when clearing. The individual systems do not need to know about Player or other game-specific types.
+
+See [Engine](Engine.md), [Input](Input.md), [Time](Time.md), and [Renderer](Renderer.md) for exact APIs and lifecycle behavior.
+
+## Units
+
+| Value                                | Unit                                             |
+| ------------------------------------ | ------------------------------------------------ |
+| Timestamp passed to Time             | Milliseconds from the browser animation callback |
+| Delta time passed to future gameplay | Seconds                                          |
+| Drawing coordinates and dimensions   | Logical pixels                                   |
+| Future movement speed                | Logical pixels per second                        |
+| Future Transform rotation            | Radians                                          |
+| Future Transform scale               | Unitless                                         |
+
+DPI and physical Canvas pixels remain a Renderer concern.
+
+## Planned extension
+
+The roadmap adds `Vector2`, `Transform`, `Entity`, `Scene`, `Player`, and `GameScene`. The intended relationship is:
+
+```text
+Engine → Scene → Entity
+                  ↑
+                Player
+```
+
+Player will inherit from Entity and receive Input explicitly. Engine will update and render its active Scene without knowing about Player. Scene will forward those calls to its entities. The exact scene construction and attachment API is not implemented yet.
+
+First Motion uses this small inheritance-based design. ECS, components, physics, collisions, cameras, sprites, and multiple rendering backends remain outside v0.1. See the [roadmap](First%20Motion%20%E2%80%94%20Engine%20v0.1%20Roadmap.md) for the complete scope.
