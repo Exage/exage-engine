@@ -12,7 +12,7 @@ body {
 
 #game {
   display: block;
-  width: min(1280px, 100vw, calc(100vh * 16 / 9));
+  max-width: min(100vw, calc(100vh * var(--canvas-aspect-ratio, 16 / 9)));
   height: auto;
   background: #202633;
   outline: 1px solid #465269;

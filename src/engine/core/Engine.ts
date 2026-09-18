@@ -1,4 +1,5 @@
-import { Renderer } from '../rendering/Renderer'
+import { Time } from '@/engine/core/Time'
+import { Renderer } from '@/engine/rendering/Renderer'
 
 export interface EngineOptions {
   canvas: HTMLCanvasElement
@@ -9,6 +10,7 @@ export interface EngineOptions {
 }
 
 export class Engine {
+  readonly time = new Time()
   private readonly renderer: Renderer
   private frameId: number | null = null
 
@@ -29,6 +31,10 @@ export class Engine {
       return
     }
 
+    this.time.reset()
+    window.addEventListener('blur', this.resetTime)
+    window.addEventListener('focus', this.resetTime)
+    document.addEventListener('visibilitychange', this.resetTime)
     this.frameId = requestAnimationFrame(this.frame)
     console.log('[Exage Engine] Started')
   }
@@ -40,14 +46,23 @@ export class Engine {
 
     cancelAnimationFrame(this.frameId)
     this.frameId = null
+    window.removeEventListener('blur', this.resetTime)
+    window.removeEventListener('focus', this.resetTime)
+    document.removeEventListener('visibilitychange', this.resetTime)
+    this.time.reset()
   }
 
-  private readonly frame = (): void => {
+  private readonly resetTime = (): void => {
+    this.time.reset()
+  }
+
+  private readonly frame = (timestamp: number): void => {
     if (!this.isRunning) {
       return
     }
 
     try {
+      this.time.update(timestamp)
       this.renderer.clear()
       this.frameId = requestAnimationFrame(this.frame)
     } catch (error) {

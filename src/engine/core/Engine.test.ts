@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Engine } from './Engine'
+import { Engine } from '@/engine/core/Engine'
 
 afterEach(() => vi.unstubAllGlobals())
 
 function setup() {
+  const windowTarget = new EventTarget()
+  const documentTarget = new EventTarget()
+  vi.stubGlobal('window', windowTarget)
+  vi.stubGlobal('document', documentTarget)
   const pending = new Map<number, FrameRequestCallback>()
   let nextId = 0
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
@@ -17,13 +21,57 @@ function setup() {
   const canvas = {
     width: 0,
     height: 0,
-    getContext: vi.fn(() => ({ clearRect })),
+    style: { setProperty: vi.fn() },
+    getContext: vi.fn(() => ({ clearRect, setTransform: vi.fn() })),
   } as unknown as HTMLCanvasElement
   const engine = new Engine({ canvas, width: 1280, height: 720 })
-  return { engine, canvas, pending, clearRect }
+  function frame(timestamp: number) {
+    const [id, callback] = [...pending.entries()][0]!
+    pending.delete(id)
+    callback(timestamp)
+  }
+
+  return { engine, canvas, pending, clearRect, frame, windowTarget, documentTarget }
 }
 
 describe('Engine lifecycle', () => {
+  it('updates time before rendering and resets it on restart', () => {
+    const { engine, frame, clearRect } = setup()
+    engine.start()
+    frame(1000)
+    expect(engine.time.deltaTime).toBe(0)
+    clearRect.mockImplementation(() => {
+      expect(engine.time.deltaTime).toBeCloseTo(0.02)
+    })
+    frame(1020)
+    expect(engine.time.fps).toBeCloseTo(50)
+    clearRect.mockReset()
+    engine.stop()
+    engine.start()
+    frame(10000)
+    expect(engine.time.deltaTime).toBe(0)
+    engine.stop()
+  })
+
+  it.each(['blur', 'focus', 'visibilitychange'])('resets time on %s', (eventName) => {
+    const { engine, frame, windowTarget, documentTarget } = setup()
+    engine.start()
+    frame(0)
+    frame(20)
+    const target = eventName === 'visibilitychange' ? documentTarget : windowTarget
+    target.dispatchEvent(new Event(eventName))
+    frame(10000)
+    expect(engine.time.deltaTime).toBe(0)
+    frame(10020)
+    expect(engine.time.deltaTime).toBeCloseTo(0.02)
+    engine.stop()
+
+    engine.time.update(0)
+    engine.time.update(20)
+    target.dispatchEvent(new Event(eventName))
+    expect(engine.time.deltaTime).toBeCloseTo(0.02)
+  })
+
   it('keeps a single loop across repeated start, stop, and restart calls', () => {
     const { engine, pending, clearRect, canvas } = setup()
     expect(engine.isRunning).toBe(false)

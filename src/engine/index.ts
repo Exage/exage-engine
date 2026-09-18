@@ -1,2 +1,5 @@
-export { Engine } from './core/Engine'
-export type { EngineOptions } from './core/Engine'
+export { Engine } from '@/engine/core/Engine'
+export type { EngineOptions } from '@/engine/core/Engine'
+export { Time } from '@/engine/core/Time'
+export { Renderer } from '@/engine/rendering/Renderer'
+export type { TextOptions } from '@/engine/rendering/Renderer'
