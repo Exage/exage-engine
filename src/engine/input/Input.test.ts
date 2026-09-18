@@ -101,3 +101,31 @@ describe('Input', () => {
     input.stop()
   })
 })
+
+it('maps canvas mouse coordinates, queues only left clicks, and cleans up listeners', () => {
+  const { windowTarget } = setup()
+  const canvas = Object.assign(new EventTarget(), {
+    style: { width: '1000px' },
+    getBoundingClientRect: () => ({ left: 100, top: 50, width: 500, height: 300 }),
+  })
+  const input = new Input(canvas as unknown as HTMLCanvasElement)
+  input.start()
+  const mouse = (type: string, button = 0): void => {
+    canvas.dispatchEvent(Object.assign(new Event(type), { clientX: 250, clientY: 150, button }))
+  }
+  mouse('mousemove')
+  expect(input.pointer).toMatchObject({ x: 300, y: 200 })
+  mouse('mousedown', 2)
+  expect(input.clicks).toHaveLength(0)
+  mouse('mousedown')
+  expect(input.clicks).toHaveLength(1)
+  input.endFrame()
+  expect(input.clicks).toHaveLength(0)
+  mouse('mousedown')
+  windowTarget.dispatchEvent(new Event('blur'))
+  expect(input.pointer).toBeNull()
+  expect(input.clicks).toHaveLength(0)
+  input.stop()
+  mouse('mousedown')
+  expect(input.clicks).toHaveLength(0)
+})

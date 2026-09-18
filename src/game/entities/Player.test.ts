@@ -12,10 +12,10 @@ function setup(keys: string[] = []) {
 
 describe('Player', () => {
   it.each([
-    ['KeyW', 0, -20],
-    ['KeyS', 0, 20],
-    ['KeyA', -20, 0],
-    ['KeyD', 20, 0],
+    ['KeyW', 0, -40],
+    ['KeyS', 0, 40],
+    ['KeyA', -40, 0],
+    ['KeyD', 40, 0],
   ] as const)('moves with %s in logical pixels per second', (key, x, y) => {
     const { player } = setup([key])
     player.transform.position.set(100, 200)
@@ -24,7 +24,7 @@ describe('Player', () => {
     expect(player.transform.position.y).toBeCloseTo(200 + y)
   })
 
-  it.each([30, 60, 120])('travels 200 pixels in one second at %i FPS in every direction', (fps) => {
+  it.each([30, 60, 120])('travels 400 pixels in one second at %i FPS in every direction', (fps) => {
     for (const keys of [
       ['KeyD'],
       ['KeyA'],
@@ -39,7 +39,7 @@ describe('Player', () => {
       for (let frame = 0; frame < fps; frame++) {
         player.update(1 / fps)
       }
-      expect(player.transform.position.length()).toBeCloseTo(200)
+      expect(player.transform.position.length()).toBeCloseTo(400)
     }
   })
 
@@ -49,11 +49,11 @@ describe('Player', () => {
     expect(player.transform.position.length()).toBe(0)
     held.delete('KeyA')
     player.update(0.1)
-    expect(player.transform.position.x).toBe(20)
+    expect(player.transform.position.x).toBe(40)
     expect(player.transform.position.y).toBe(0)
     held.clear()
     player.update(0.1)
-    expect(player.transform.position.x).toBe(20)
+    expect(player.transform.position.x).toBe(40)
     expect(player.transform.position.y).toBe(0)
     held.add('KeyW')
     player.update(0)
@@ -62,9 +62,9 @@ describe('Player', () => {
 
   it('draws its rectangle through Renderer at its transform position', () => {
     const { player } = setup()
-    const renderer = { drawRect: vi.fn() } as unknown as Renderer
+    const renderer = { drawRotatedRect: vi.fn() } as unknown as Renderer
     player.transform.position.set(123, 456)
     player.render(renderer)
-    expect(renderer.drawRect).toHaveBeenCalledExactlyOnceWith(123, 456, 40, 40, '#66ccff')
+    expect(renderer.drawRotatedRect).toHaveBeenCalledWith(123, 456, 40, 40, 0, '#66ccff')
   })
 })

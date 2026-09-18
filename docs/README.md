@@ -10,6 +10,8 @@ Start with [Getting Started](Getting%20Started.md) to run the First Motion demo.
 
 ## Engine
 
+- [Camera2D](engine/Camera2D.md): bounded world following and screen-space UI.
+
 - [Engine](engine/Engine.md): startup, shutdown, scene selection, and frame order.
 - [Time](engine/Time.md): delta time, FPS, and focus recovery.
 - [Input](engine/Input.md): held keys and per-frame transitions.

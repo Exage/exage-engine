@@ -9,6 +9,12 @@ export class Scene {
     this.entities.push(entity)
   }
 
+  /** Receive logical viewport changes from Engine. */
+  resize(width: number, height: number): void {
+    void width
+    void height
+  }
+
   update(dt: number): void {
     for (const entity of this.entities) {
       entity.update(dt)

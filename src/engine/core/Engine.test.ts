@@ -23,6 +23,8 @@ function setup() {
     width: 0,
     height: 0,
     style: { setProperty: vi.fn() },
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
     getContext: vi.fn(() => ({ clearRect, setTransform: vi.fn() })),
   } as unknown as HTMLCanvasElement
   const engine = new Engine({ canvas, width: 1280, height: 720 })
@@ -36,6 +38,22 @@ function setup() {
 }
 
 describe('Engine lifecycle', () => {
+  it('resizes the buffer and notifies both current and newly selected scenes', () => {
+    const { engine, canvas } = setup()
+    const scene = new Scene()
+    const resize = vi.spyOn(scene, 'resize')
+    engine.setScene(scene)
+    engine.resize(800, 600)
+    expect([canvas.width, canvas.height]).toEqual([800, 600])
+    expect(resize).toHaveBeenLastCalledWith(800, 600)
+    const next = new Scene()
+    const nextResize = vi.spyOn(next, 'resize')
+    engine.setScene(next)
+    expect(nextResize).toHaveBeenCalledWith(800, 600)
+    expect(() => engine.resize(0, 600)).toThrow(RangeError)
+    expect([canvas.width, canvas.height]).toEqual([800, 600])
+  })
+
   it('updates the active scene before clearing and rendering, then ends input', () => {
     const { engine, frame, clearRect, windowTarget } = setup()
     const scene = new Scene()

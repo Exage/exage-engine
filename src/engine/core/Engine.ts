@@ -13,7 +13,7 @@ export interface EngineOptions {
 
 export class Engine {
   readonly time = new Time()
-  readonly input = new Input()
+  readonly input: Input
   private readonly renderer: Renderer
   private scene: Scene | null = null
   private frameId: number | null = null
@@ -24,6 +24,7 @@ export class Engine {
     }
 
     this.renderer = new Renderer(canvas, width, height)
+    this.input = new Input(canvas)
   }
 
   get isRunning(): boolean {
@@ -33,6 +34,13 @@ export class Engine {
   /** Select the scene for subsequent frames, or null to clear it. */
   setScene(scene: Scene | null): void {
     this.scene = scene
+    scene?.resize(this.renderer.width, this.renderer.height)
+  }
+
+  /** Resize the drawing surface and notify the current scene. */
+  resize(width: number, height: number): void {
+    this.renderer.resize(width, height)
+    this.scene?.resize(width, height)
   }
 
   start(): void {

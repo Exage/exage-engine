@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { Camera2D } from '@/engine/rendering/Camera2D'
 import { Renderer } from '@/engine/rendering/Renderer'
 
 afterEach(() => vi.unstubAllGlobals())
@@ -8,6 +9,10 @@ function setup(pixelRatio = 1, width = 1280, height = 720) {
   vi.stubGlobal('window', display)
   const context = {
     clearRect: vi.fn(),
+    save: vi.fn(),
+    restore: vi.fn(),
+    translate: vi.fn(),
+    rotate: vi.fn(),
     setTransform: vi.fn(),
     fillRect: vi.fn(),
     fillText: vi.fn(),
@@ -27,6 +32,45 @@ function setup(pixelRatio = 1, width = 1280, height = 720) {
 }
 
 describe('Renderer', () => {
+  it('resizes logical dimensions and refreshes density without stretching coordinates', () => {
+    const { renderer, canvas, context, display } = setup(2)
+    renderer.resize(800, 600)
+    expect([renderer.width, renderer.height]).toEqual([800, 600])
+    expect([canvas.width, canvas.height]).toEqual([1600, 1200])
+    expect(canvas.style.width).toBe('800px')
+    expect(canvas.style.aspectRatio).toBe('800 / 600')
+    display.devicePixelRatio = 1.25
+    renderer.resize(1600, 900)
+    renderer.clear()
+    expect([canvas.width, canvas.height]).toEqual([2000, 1125])
+    expect(context.clearRect).toHaveBeenLastCalledWith(0, 0, 1600, 900)
+  })
+
+  it('restores the camera transform after rotating a rectangle', () => {
+    const { renderer, context } = setup(2)
+    renderer.drawRotatedRect(100, 200, 40, 20, Math.PI / 2, '#66ccff')
+    expect(context.save).toHaveBeenCalledOnce()
+    expect(context.translate).toHaveBeenCalledWith(120, 210)
+    expect(context.rotate).toHaveBeenCalledWith(Math.PI / 2)
+    expect(context.fillRect).toHaveBeenCalledWith(-20, -10, 40, 20)
+    expect(context.restore).toHaveBeenCalledOnce()
+  })
+
+  it.each([1, 1.25, 2])('preserves rounded DPI scaling with camera and UI at %s', (ratio) => {
+    const { renderer, canvas, context } = setup(ratio, 101, 51)
+    const camera = new Camera2D(101, 51)
+    camera.position.set(300, 200)
+    const sx = canvas.width / 101
+    const sy = canvas.height / 51
+    renderer.setCamera(camera)
+    expect(context.setTransform).toHaveBeenLastCalledWith(sx, 0, 0, sy, -300 * sx, -200 * sy)
+    renderer.setCamera(null)
+    expect(context.setTransform).toHaveBeenLastCalledWith(sx, 0, 0, sy, -0, -0)
+    renderer.setCamera(camera)
+    renderer.clear()
+    expect(context.setTransform).toHaveBeenLastCalledWith(sx, 0, 0, sy, 0, 0)
+  })
+
   it.each([1, 1.25, 2])('keeps logical coordinates at pixel ratio %s', (ratio) => {
     const { renderer, canvas, context } = setup(ratio)
     expect([canvas.width, canvas.height]).toEqual([1280 * ratio, 720 * ratio])

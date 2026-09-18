@@ -1,9 +1,42 @@
+import { Vector2 } from '@/engine/math/Vector2'
+
 /** Keyboard state indexed by physical KeyboardEvent.code values. */
 export class Input {
   private readonly held = new Set<string>()
   private readonly pressed = new Set<string>()
   private readonly released = new Set<string>()
   private listening = false
+  pointer: Vector2 | null = null
+  readonly clicks: Vector2[] = []
+
+  constructor(private readonly canvas?: HTMLCanvasElement) {}
+
+  private pointerPosition(event: MouseEvent): Vector2 | null {
+    if (!this.canvas) {
+      return null
+    }
+    const bounds = this.canvas.getBoundingClientRect()
+    if (bounds.width <= 0 || bounds.height <= 0) {
+      return null
+    }
+    const width = Number.parseFloat(this.canvas.style.width)
+    const height = (width * bounds.height) / bounds.width
+    return new Vector2(
+      ((event.clientX - bounds.left) * width) / bounds.width,
+      ((event.clientY - bounds.top) * height) / bounds.height
+    )
+  }
+
+  private readonly onMouseMove = (event: MouseEvent): void => {
+    this.pointer = this.pointerPosition(event)
+  }
+
+  private readonly onMouseDown = (event: MouseEvent): void => {
+    this.onMouseMove(event)
+    if (event.button === 0 && this.pointer) {
+      this.clicks.push(this.pointer.clone())
+    }
+  }
 
   start(): void {
     if (this.listening) {
@@ -14,6 +47,8 @@ export class Input {
     window.addEventListener('keyup', this.onKeyUp)
     window.addEventListener('blur', this.reset)
     document.addEventListener('visibilitychange', this.onVisibilityChange)
+    this.canvas?.addEventListener('mousemove', this.onMouseMove)
+    this.canvas?.addEventListener('mousedown', this.onMouseDown)
     this.listening = true
   }
 
@@ -23,6 +58,8 @@ export class Input {
       window.removeEventListener('keyup', this.onKeyUp)
       window.removeEventListener('blur', this.reset)
       document.removeEventListener('visibilitychange', this.onVisibilityChange)
+      this.canvas?.removeEventListener('mousemove', this.onMouseMove)
+      this.canvas?.removeEventListener('mousedown', this.onMouseDown)
       this.listening = false
     }
 
@@ -43,11 +80,13 @@ export class Input {
 
   /** Clear frame transitions after update and rendering, preserving held keys. */
   endFrame(): void {
+    this.clicks.length = 0
     this.pressed.clear()
     this.released.clear()
   }
 
   private readonly reset = (): void => {
+    this.pointer = null
     this.held.clear()
     this.endFrame()
   }

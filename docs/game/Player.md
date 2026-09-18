@@ -1,6 +1,6 @@
 # Player and GameScene
 
-The First Motion demo displays a 40 × 40 logical-pixel blue rectangle controlled with WASD. It starts at the center of the logical viewport and moves at 200 logical pixels per second.
+The First Motion demo displays a 40 × 40 logical-pixel blue rectangle controlled with WASD. It starts at the center of the logical viewport and moves at 400 logical pixels per second.
 
 Sources: [Player.ts](../../src/game/entities/Player.ts), [GameScene.ts](../../src/game/scenes/GameScene.ts), and [main.ts](../../src/main.ts).
 
@@ -15,7 +15,7 @@ Sources: [Player.ts](../../src/game/entities/Player.ts), [GameScene.ts](../../sr
 | S (`KeyS`) | Down      |
 | D (`KeyD`) | Right     |
 
-Each `update(dt)` resets a reusable direction vector, reads the held keys, and normalizes a nonzero direction. It multiplies that direction by `200 * dt` and adds the displacement to its position. Delta time is in seconds.
+Each `update(dt)` resets a reusable direction vector, reads the held keys, and normalizes a nonzero direction. It multiplies that direction by `400 * dt` and adds the displacement to its position. Delta time is in seconds.
 
 Opposing keys cancel on their axis. Releasing all keys stops movement. Diagonals travel at the same speed as horizontal and vertical movement. Reusing the direction vector avoids creating a new vector each frame.
 
@@ -47,6 +47,6 @@ The frame chain is `Engine → GameScene → Player`. GameScene inherits entity 
 
 Run `npm run dev` and open the printed URL. Hold WASD to move and combine keys for diagonal movement. Switching to another tab clears input; returning does not restore held keys or include inactive time in movement. Release and press a key again to resume.
 
-There are no boundaries or collisions: the player can move outside the Canvas. Reloading resets it to the center. There is no camera, animation, or physics yet. See [Debug Overlay](Debug%20Overlay.md) for the displayed diagnostics.
+GameScene constrains movement to a 6000 × 2000 world and follows the player with a bounded camera. Mouse movement rotates the player and barrel toward the cursor in world coordinates. Each left click fires one projectile at 1000 logical pixels per second. Forty stationary red targets are distributed across the world; a hit turns a target gray and consumes the projectile. Gray targets no longer block projectiles. Swept collision checks select the nearest active target along each frame segment. Projectiles expire after four seconds or when leaving the world. Reloading resets the scene. Physics and sprite animation are not implemented. See [Debug Overlay](Debug%20Overlay.md) for the displayed diagnostics.
 
 Automated tests cover cardinal directions, diagonal speed, opposing keys, release, zero delta, rendering through Renderer, equal travel at 30/60/120 FPS, and focus recovery through Engine with GameScene attached.

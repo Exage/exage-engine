@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. The page shows a dark Canvas fitted inside the viewport. The console logs `[Exage Engine] Started`. A blue rectangle starts at the center. Move it with WASD; diagonal movement has the same speed. Movement is not constrained to the viewport, so the rectangle can leave the screen. Reload to reset its position.
+Open the local URL printed by Vite. The Canvas fills the browser viewport at page load and resizes with the window. The camera adapts without resetting the player, targets, or projectiles. The console logs `[Exage Engine] Started`. A blue rectangle starts at the center. Move it with WASD; diagonal movement has the same speed. The player explores a 6000 × 2000 world with a coordinate grid. The camera follows on both axes and stops at world boundaries; the player stays inside the world. Diagnostics remain fixed on screen. Reload to reset the position.
 
 ## Application setup
 
@@ -32,8 +32,8 @@ if (!(canvas instanceof HTMLCanvasElement)) {
   throw new Error('The game canvas was not found')
 }
 
-const width = 1280
-const height = 720
+const width = Math.max(1, window.innerWidth)
+const height = Math.max(1, window.innerHeight)
 const engine = new Engine({ canvas, width, height })
 engine.setScene(new GameScene(engine.input, engine.time, width, height))
 engine.start()

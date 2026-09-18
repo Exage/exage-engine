@@ -24,6 +24,7 @@ src/
     scene/
       Scene.ts              Updates and renders entities in insertion order
     rendering/
+      Camera2D.ts           Bounded viewport following in world coordinates
       Renderer.ts           Owns Canvas and performs drawing
   game/
     entities/
@@ -62,7 +63,7 @@ Engine publicly exposes readonly references to Time and Input. Its Renderer is p
 - Future game objects should receive only required dependencies, such as Input through a constructor and delta time through `update(dt)`.
 - Gameplay should draw through Renderer instead of using Canvas APIs directly.
 
-Public exports currently include `Engine`, `EngineOptions`, `Time`, `Input`, `Vector2`, `Transform`, `Entity`, `Scene`, `Renderer`, and `TextOptions`.
+Public exports currently include `Engine`, `EngineOptions`, `Time`, `Input`, `Vector2`, `Transform`, `Entity`, `Scene`, `Renderer`, `Camera2D`, and `TextOptions`.
 
 `Vector2` stores public `x` and `y` coordinates, both zero by default. `set(x, y)`, `add(vector)`, `subtract(vector)`, `multiply(scalar)`, and `normalize()` mutate the instance and return it for chaining. `clone()` creates an independent copy; `length()` returns its Euclidean length. Normalizing a zero vector leaves it unchanged. Clone a direction before scaling it if its original value must be preserved.
 
@@ -99,4 +100,4 @@ Engine → Scene → Entity
 
 Player inherits from Entity and receives Input explicitly. Engine updates and renders its active Scene without knowing about Player. [Scene](engine/Scene.md) forwards those calls to its entities. Application setup constructs GameScene with Input, a readonly timing view for diagnostics, and logical dimensions, then attaches it through `engine.setScene(scene)`. See [Player and GameScene](game/Player.md).
 
-First Motion uses this small inheritance-based design. ECS, components, physics, collisions, cameras, sprites, and multiple rendering backends remain outside v0.1. See the [roadmap](First%20Motion%20%E2%80%94%20Engine%20v0.1%20Roadmap.md) for the complete scope.
+First Motion uses this small inheritance-based design. The demo now adds a bounded Camera2D and a large world. ECS, components, physics, collisions, sprites, and multiple rendering backends remain unimplemented. See the [roadmap](First%20Motion%20%E2%80%94%20Engine%20v0.1%20Roadmap.md) for the complete scope.

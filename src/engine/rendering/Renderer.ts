@@ -1,3 +1,5 @@
+import type { Camera2D } from '@/engine/rendering/Camera2D'
+
 export interface TextOptions {
   color?: string
   /** Font size in logical pixels. */
@@ -11,9 +13,11 @@ export class Renderer {
 
   constructor(
     canvas: HTMLCanvasElement,
-    readonly width: number,
-    readonly height: number
+    private viewportWidth: number,
+    private viewportHeight: number
   ) {
+    const width = viewportWidth
+    const height = viewportHeight
     if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
       throw new RangeError('Renderer dimensions must be positive integers')
     }
@@ -33,16 +37,66 @@ export class Renderer {
     this.updateResolution()
   }
 
+  get width(): number {
+    return this.viewportWidth
+  }
+
+  get height(): number {
+    return this.viewportHeight
+  }
+
+  /** Update logical viewport dimensions without changing world state. */
+  resize(width: number, height: number): void {
+    if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0) {
+      throw new RangeError('Viewport dimensions must be positive integers')
+    }
+    this.viewportWidth = width
+    this.viewportHeight = height
+    this.canvas.style.width = `${width}px`
+    this.canvas.style.height = 'auto'
+    this.canvas.style.aspectRatio = `${width} / ${height}`
+    this.canvas.style.setProperty('--canvas-aspect-ratio', `${width} / ${height}`)
+    this.updateResolution()
+  }
+
   /** Begin a frame, refreshing display density before clearing the logical viewport. */
   clear(): void {
     this.updateResolution()
     this.context.clearRect(0, 0, this.width, this.height)
   }
 
+  /** Select world coordinates, or pass null to draw screen-space UI. */
+  setCamera(camera: Camera2D | null): void {
+    const scaleX = this.canvas.width / this.width
+    const scaleY = this.canvas.height / this.height
+    const x = camera?.position.x ?? 0
+    const y = camera?.position.y ?? 0
+    this.context.setTransform(scaleX, 0, 0, scaleY, -x * scaleX, -y * scaleY)
+  }
+
   /** Draw a filled rectangle in logical pixels, with its origin at the top left. */
   drawRect(x: number, y: number, width: number, height: number, color = '#ffffff'): void {
     this.context.fillStyle = color
     this.context.fillRect(x, y, width, height)
+  }
+
+  /** Draw a rectangle rotated around its center, preserving camera and DPI transforms. */
+  drawRotatedRect(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    rotation: number,
+    color: string
+  ): void {
+    this.context.save()
+    try {
+      this.context.translate(x + width / 2, y + height / 2)
+      this.context.rotate(rotation)
+      this.drawRect(-width / 2, -height / 2, width, height, color)
+    } finally {
+      this.context.restore()
+    }
   }
 
   /** Draw text in logical pixels, anchored at the top left. */

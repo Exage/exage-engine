@@ -5,7 +5,7 @@ import type { Input, Renderer } from '@/engine'
 export class Player extends Entity {
   readonly width = 40
   readonly height = 40
-  private readonly speed = 200
+  private readonly speed = 400
   private readonly direction = new Vector2()
 
   constructor(private readonly input: Input) {
@@ -34,8 +34,25 @@ export class Player extends Entity {
     }
   }
 
+  aimAt(x: number, y: number): void {
+    const dx = x - this.transform.position.x - this.width / 2
+    const dy = y - this.transform.position.y - this.height / 2
+    if (dx !== 0 || dy !== 0) {
+      this.transform.rotation = Math.atan2(dy, dx)
+    }
+  }
+
   override render(renderer: Renderer): void {
     const { x, y } = this.transform.position
-    renderer.drawRect(x, y, this.width, this.height, '#66ccff')
+    const angle = this.transform.rotation
+    renderer.drawRotatedRect(x, y, this.width, this.height, angle, '#66ccff')
+    renderer.drawRotatedRect(
+      x + this.width / 2 + Math.cos(angle) * 24 - 14,
+      y + this.height / 2 + Math.sin(angle) * 24 - 5,
+      28,
+      10,
+      angle,
+      '#d5f2ff'
+    )
   }
 }
