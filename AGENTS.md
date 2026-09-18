@@ -7,3 +7,7 @@
 ## Language
 
 - Write all code comments, documentation, README files, API descriptions, and other explanatory text in project files in English.
+
+## Imports
+
+- Prefer the `@/` alias, which maps to `src/`, over relative paths for project imports. Preserve the existing dependency boundaries between engine and game code.

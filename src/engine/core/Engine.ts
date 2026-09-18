@@ -30,6 +30,7 @@ export class Engine {
     }
 
     this.frameId = requestAnimationFrame(this.frame)
+    console.log('[Exage Engine] Started')
   }
 
   stop(): void {

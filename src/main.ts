@@ -1,5 +1,5 @@
 import './style.css'
-import { Engine } from './engine'
+import { Engine } from '@/engine'
 
 const canvas = document.querySelector('#game')
 
