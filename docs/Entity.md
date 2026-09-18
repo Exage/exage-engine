@@ -43,8 +43,8 @@ The render method uses logical coordinates from Transform. Rotation and scale ar
 
 ## Dependencies and lifecycle
 
-Entity does not own a game loop, subscribe to browser events, or retain a Renderer. It does not know about Engine, Input, or Time. A future Player subclass will receive Input explicitly through its constructor, call `super()`, and receive time through `update(dt)`.
+Entity does not own a game loop, subscribe to browser events, or retain a Renderer. It does not know about Engine, Input, or Time. The Player subclass receives Input explicitly through its constructor, calls `super()`, and receives time through `update(dt)`.
 
 [Scene](Scene.md) calls `update(dt)` and `render(renderer)` on its entities. Register an object with `scene.add(entity)` and select the scene through `engine.setScene(scene)`. Creating an Entity alone does not display it; it needs rendering behavior and membership in the active scene.
 
-IDs, automatic removal, collision, physics, components, and parent-child relationships are not part of this base class. See [Architecture](Architecture.md) for the planned dependency chain and [Renderer](Renderer.md) for drawing methods.
+IDs, automatic removal, collision, physics, components, and parent-child relationships are not part of this base class. See [Architecture](Architecture.md) for the dependency chain and [Renderer](Renderer.md) for drawing methods.

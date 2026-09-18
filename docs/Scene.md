@@ -71,6 +71,6 @@ Request the next animation frame
 
 Entities can read [Input](Input.md) during update, including one-frame presses. Cleanup happens after rendering. If update or rendering throws, Engine stops, clears input and timing state, and rethrows the error.
 
-Scene does not own Input, Time, Renderer, or an animation loop. A future GameScene can create Player using explicitly supplied dependencies. There is no SceneManager, scene stack, or automatic entity removal. Player and GameScene remain to be implemented.
+Scene does not own Input, Time, Renderer, or an animation loop. GameScene creates Player using explicitly supplied Input and centers it using logical dimensions. There is no SceneManager, scene stack, or automatic entity removal. See [Player and GameScene](Player.md) for the playable demo.
 
 See [Entity](Entity.md) for game objects and [Engine](Engine.md) for lifecycle details.

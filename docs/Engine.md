@@ -55,7 +55,7 @@ requestAnimationFrame callback
 
 Time calculates the frame interval, Renderer clears the Canvas, and Input discards one-frame transitions while preserving held keys.
 
-The selected Scene updates and renders its entities. Engine captures one Scene per frame, so changing the selection during a callback takes effect on the next frame. If a scene callback stops or restarts Engine, the old frame exits before the next Engine phase. The default application does not attach a scene yet and displays an empty Canvas.
+The selected Scene updates and renders its entities. Engine captures one Scene per frame, so changing the selection during a callback takes effect on the next frame. If a scene callback stops or restarts Engine, the old frame exits before the next Engine phase. The default application attaches GameScene, which contains the WASD-controlled Player.
 
 ## Stop, restart, and focus
 

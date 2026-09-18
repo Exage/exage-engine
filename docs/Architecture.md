@@ -25,11 +25,16 @@ src/
       Scene.ts              Updates and renders entities in insertion order
     rendering/
       Renderer.ts           Owns Canvas and performs drawing
+  game/
+    entities/
+      Player.ts             WASD movement and rectangle rendering
+    scenes/
+      GameScene.ts          Creates and centers the player
   utils/
     devLog.ts               Development-only logging helper
 ```
 
-Tests live alongside their implementations. `src/game/`, Player, and GameScene have not been implemented yet.
+Tests live alongside their implementations. Game code lives in `src/game/` and imports the engine API; engine code does not import game classes.
 
 ## Ownership
 
@@ -82,9 +87,9 @@ See [Engine](Engine.md), [Input](Input.md), [Time](Time.md), and [Renderer](Rend
 
 DPI and physical Canvas pixels remain a Renderer concern.
 
-## Planned extension
+## Game integration
 
-With `Vector2`, `Transform`, and `Entity` implemented, Scene is also available; the remaining game classes are `Player` and `GameScene`. The intended relationship is:
+The playable demo uses Player and GameScene. The relationship is:
 
 ```text
 Engine → Scene → Entity
@@ -92,6 +97,6 @@ Engine → Scene → Entity
                 Player
 ```
 
-Player will inherit from Entity and receive Input explicitly. Engine updates and renders its active Scene without knowing about Player. [Scene](Scene.md) forwards those calls to its entities. Application setup constructs a Scene and attaches it through `engine.setScene(scene)`.
+Player inherits from Entity and receives Input explicitly. Engine updates and renders its active Scene without knowing about Player. [Scene](Scene.md) forwards those calls to its entities. Application setup constructs GameScene with Input, a readonly timing view for diagnostics, and logical dimensions, then attaches it through `engine.setScene(scene)`. See [Player and GameScene](Player.md).
 
 First Motion uses this small inheritance-based design. ECS, components, physics, collisions, cameras, sprites, and multiple rendering backends remain outside v0.1. See the [roadmap](First%20Motion%20%E2%80%94%20Engine%20v0.1%20Roadmap.md) for the complete scope.

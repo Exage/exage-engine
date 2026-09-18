@@ -1,6 +1,6 @@
 # Getting Started
 
-The project currently runs an empty Canvas through its own Engine loop. Time, keyboard Input, and basic Renderer APIs are implemented. Scene and Entity are available, but the entry point does not attach a scene yet. A movable Player, GameScene, and debug overlay are still planned.
+The project runs a playable Canvas demo through its own Engine loop. GameScene contains a rectangle controlled with WASD. A debug overlay displays timing, entity count, and player position in the top-left corner.
 
 ## Requirements
 
@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-Open the local URL printed by Vite. The page shows a dark Canvas fitted inside the viewport. The console logs `[Exage Engine] Started`. No rectangle or visible response to WASD is expected yet.
+Open the local URL printed by Vite. The page shows a dark Canvas fitted inside the viewport. The console logs `[Exage Engine] Started`. A blue rectangle starts at the center. Move it with WASD; diagonal movement has the same speed. Movement is not constrained to the viewport, so the rectangle can leave the screen. Reload to reset its position.
 
 ## Application setup
 
@@ -24,6 +24,7 @@ Open the local URL printed by Vite. The page shows a dark Canvas fitted inside t
 ```ts
 import './style.css'
 import { Engine } from '@/engine'
+import { GameScene } from '@/game/scenes/GameScene'
 
 const canvas = document.querySelector('#game')
 
@@ -31,7 +32,10 @@ if (!(canvas instanceof HTMLCanvasElement)) {
   throw new Error('The game canvas was not found')
 }
 
-const engine = new Engine({ canvas, width: 1280, height: 720 })
+const width = 1280
+const height = 720
+const engine = new Engine({ canvas, width, height })
+engine.setScene(new GameScene(engine.input, engine.time, width, height))
 engine.start()
 
 if (import.meta.hot) {
@@ -75,6 +79,8 @@ The [devLog](../src/utils/devLog.ts) helper uses this value to suppress its outp
 - [Input](Input.md): held keys and per-frame transitions.
 - [Vector2](Vector2.md): positions, directions, and normalized movement.
 - [Transform](Transform.md): object position, rotation, and scale.
+- [Player and GameScene](Player.md): WASD controls and the playable demo.
+- [Debug Overlay](Debug%20Overlay.md): live timing, entity count, and player position.
 - [Scene](Scene.md): entity containers and connection to Engine.
 - [Entity](Entity.md): the base game object and its update and render methods.
 - [Renderer](Renderer.md): drawing, text, and display density.

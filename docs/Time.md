@@ -48,7 +48,7 @@ position.x += 200 * dt
 
 At 60 FPS, one frame moves approximately 3.33 pixels. At 30 FPS, one frame moves approximately 6.67 pixels. Over one second of regular frames, both travel approximately 200 pixels.
 
-The Player and its movement are still planned; this is the formula that gameplay will use.
+Player uses this formula with a normalized WASD direction; see [Player and GameScene](Player.md).
 
 ## Long frames and FPS
 
