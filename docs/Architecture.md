@@ -23,6 +23,12 @@ src/
       Transform.ts          Position, rotation, and scale of a game object
     scene/
       Scene.ts              Updates and renders entities in insertion order
+    collision/
+      BoxCollider.ts        Box colliders with configurable rotation
+      OrientedBox.ts        Oriented overlap and swept collision geometry
+      CollisionWorld.ts     Scene collision queries and kinematic movement
+      Hitbox.ts             Named target regions independent of movement
+      HitboxWorld.ts        Attack overlap and swept hit queries
     rendering/
       Camera2D.ts           Bounded viewport following in world coordinates
       Renderer.ts           Owns Canvas and performs drawing
@@ -65,6 +71,8 @@ Engine publicly exposes readonly references to Time and Input. Its Renderer is p
 
 Public exports currently include `Engine`, `EngineOptions`, `Time`, `Input`, `Vector2`, `Transform`, `Entity`, `Scene`, `Renderer`, `Camera2D`, and `TextOptions`.
 
+Collision and target APIs also include `BoxCollider`, `CollisionWorld`, `Hitbox`, `HitboxWorld`, their option/result types, and oriented-box geometry helpers. The engine returns hit information; game code defines damage, health, and reactions. Each Scene owns both query worlds, while entities own their collider and hitbox array.
+
 `Vector2` stores public `x` and `y` coordinates, both zero by default. `set(x, y)`, `add(vector)`, `subtract(vector)`, `multiply(scalar)`, and `normalize()` mutate the instance and return it for chaining. `clone()` creates an independent copy; `length()` returns its Euclidean length. Normalizing a zero vector leaves it unchanged. Clone a direction before scaling it if its original value must be preserved.
 
 ## Frame coordination
@@ -90,7 +98,7 @@ DPI and physical Canvas pixels remain a Renderer concern.
 
 ## Game integration
 
-The playable demo uses Player and GameScene. The relationship is:
+The playable demo uses Player and GameScene. Each scene owns a CollisionWorld that queries entity colliders; Player receives it explicitly for blocking movement. See [Collisions](engine/Collisions.md). The relationship is:
 
 ```text
 Engine → Scene → Entity
@@ -100,4 +108,4 @@ Engine → Scene → Entity
 
 Player inherits from Entity and receives Input explicitly. Engine updates and renders its active Scene without knowing about Player. [Scene](engine/Scene.md) forwards those calls to its entities. Application setup constructs GameScene with Input, a readonly timing view for diagnostics, and logical dimensions, then attaches it through `engine.setScene(scene)`. See [Player and GameScene](game/Player.md).
 
-First Motion uses this small inheritance-based design. The demo now adds a bounded Camera2D and a large world. ECS, components, physics, collisions, sprites, and multiple rendering backends remain unimplemented. See the [roadmap](First%20Motion%20%E2%80%94%20Engine%20v0.1%20Roadmap.md) for the complete scope.
+First Motion uses this small inheritance-based design. The demo now adds a bounded Camera2D, a large world, and box collisions with optional rotation. ECS, components, rigid-body physics, sprites, and multiple rendering backends remain unimplemented. See the [roadmap](First%20Motion%20%E2%80%94%20Engine%20v0.1%20Roadmap.md) for the original milestone scope.

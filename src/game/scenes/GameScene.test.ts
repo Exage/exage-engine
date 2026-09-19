@@ -1,11 +1,138 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Engine, Entity, Input, Time } from '@/engine'
+import { BoxCollider, Engine, Entity, Input, Time, Vector2 } from '@/engine'
 import type { Renderer } from '@/engine'
 import { GameScene } from '@/game/scenes/GameScene'
+import { Projectile } from '@/game/entities/Projectile'
 
 afterEach(() => vi.unstubAllGlobals())
 
 describe('GameScene integration', () => {
+  it('toggles green colliders and purple hitboxes with Command+C and independent rotation', () => {
+    const windowTarget = new EventTarget()
+    vi.stubGlobal('window', windowTarget)
+    vi.stubGlobal('document', new EventTarget())
+    const input = new Input()
+    const scene = new GameScene(input, new Time(), 1280, 720)
+    scene.player.transform.position.set(3000, 1000)
+    scene.projectiles.push(new Projectile(3100, 1040, 0))
+    const renderer = {
+      drawRect: vi.fn(),
+      drawRotatedRect: vi.fn(),
+      drawRectOutline: vi.fn(),
+      drawRotatedRectOutline: vi.fn(),
+      drawText: vi.fn(),
+      setCamera: vi.fn(),
+    }
+    const frame = (): void => {
+      renderer.drawRectOutline.mockClear()
+      renderer.drawRotatedRectOutline.mockClear()
+      renderer.setCamera.mockClear()
+      scene.update(0)
+      scene.render(renderer as unknown as Renderer)
+      input.endFrame()
+    }
+    const press = (metaKey: boolean, repeat = false): Event => {
+      const event = Object.assign(new Event('keydown', { cancelable: true }), {
+        code: 'KeyC',
+        metaKey,
+        repeat,
+      })
+      windowTarget.dispatchEvent(event)
+      return event
+    }
+    input.start()
+    try {
+      frame()
+      expect(renderer.drawRectOutline).not.toHaveBeenCalled()
+      expect(press(false).defaultPrevented).toBe(false)
+      frame()
+      expect(renderer.drawRectOutline).not.toHaveBeenCalled()
+      expect(press(true).defaultPrevented).toBe(true)
+      frame()
+      expect(
+        renderer.drawRectOutline.mock.calls.filter((call) => call[4] === '#00ff00')
+      ).toHaveLength(2)
+      expect(
+        renderer.drawRectOutline.mock.calls.filter((call) => call[4] === '#c084fc')
+      ).toHaveLength(41)
+      expect(renderer.drawRectOutline).toHaveBeenCalledWith(3000, 1000, 40, 40, '#c084fc', 1)
+      scene.player.transform.rotation = Math.PI / 4
+      windowTarget.dispatchEvent(Object.assign(new Event('keydown'), { code: 'KeyR' }))
+      frame()
+      expect(scene.player.collider.followRotation).toBe(false)
+      expect(
+        renderer.drawRotatedRectOutline.mock.calls.filter((call) => call[5] === '#00ff00')
+      ).toHaveLength(0)
+      expect(renderer.drawRotatedRectOutline).toHaveBeenCalledWith(
+        3000,
+        1000,
+        40,
+        40,
+        Math.PI / 4,
+        '#c084fc',
+        1
+      )
+      expect(renderer.drawRectOutline).toHaveBeenCalledWith(3000, 1000, 40, 40, '#00ff00')
+      expect(renderer.drawRectOutline).toHaveBeenCalledWith(3096, 1036, 8, 8, '#00ff00')
+      expect(renderer.drawRectOutline.mock.invocationCallOrder[0]).toBeGreaterThan(
+        renderer.setCamera.mock.invocationCallOrder[0]!
+      )
+      expect(renderer.drawRectOutline.mock.invocationCallOrder.at(-1)).toBeLessThan(
+        renderer.setCamera.mock.invocationCallOrder[1]!
+      )
+      expect(press(true, true).defaultPrevented).toBe(true)
+      frame()
+      expect(
+        renderer.drawRectOutline.mock.calls.filter((call) => call[4] === '#00ff00')
+      ).toHaveLength(2)
+      // A fresh press must work even when macOS has omitted the previous C keyup.
+      press(true)
+      frame()
+      expect(renderer.drawRectOutline).not.toHaveBeenCalled()
+      expect(renderer.drawRotatedRectOutline).not.toHaveBeenCalled()
+    } finally {
+      input.stop()
+    }
+  })
+
+  it('passes through enemies but stops and slides against added walls', () => {
+    const input = new Input()
+    const held = new Set(['KeyD'])
+    vi.spyOn(input, 'isDown').mockImplementation((key) => held.has(key))
+    const scene = new GameScene(input, new Time(), 1280, 720)
+    scene.player.transform.position.set(200, 220)
+    scene.update(1)
+    expect(scene.player.transform.position).toMatchObject({ x: 600, y: 220 })
+    expect(scene.enemies.every((enemy) => enemy.collider === null)).toBe(true)
+
+    const wall = new Entity()
+    wall.transform.position.set(3100, 900)
+    wall.collider = new BoxCollider(wall, 2, 400)
+    scene.add(wall)
+    scene.player.transform.position.set(3000, 1000)
+    held.add('KeyS')
+    scene.update(0.5)
+    expect(scene.player.transform.position.x).toBeCloseTo(3060)
+    expect(scene.player.transform.position.y).toBeCloseTo(1000 + 200 / Math.sqrt(2))
+    expect(scene.collisions.overlaps(scene.player.collider)).toEqual([])
+  })
+
+  it('keeps the fixed collider inside the world while allowing aiming at its edge', () => {
+    const input = new Input()
+    const scene = new GameScene(input, new Time(), 1280, 720)
+    scene.player.transform.rotation = Math.PI / 4
+    scene.player.transform.position.set(-100, -100)
+    scene.update(0)
+    expect(scene.player.collider.bounds.x).toBeCloseTo(0)
+    expect(scene.player.collider.bounds.y).toBeCloseTo(0)
+    scene.player.transform.rotation = 0
+    scene.player.transform.position.set(0, 0)
+    input.pointer = new Vector2(100, 100)
+    scene.update(0)
+    expect(scene.player.transform.rotation).toBe(Math.PI / 4)
+    expect(scene.player.collider.shape.rotation).toBe(0)
+  })
+
   it('adapts the camera on resize without resetting gameplay', () => {
     const scene = new GameScene(new Input(), new Time(), 1280, 720)
     scene.player.transform.position.set(3000, 1000)

@@ -1,10 +1,16 @@
 import { Vector2 } from '@/engine/math/Vector2'
 
+export type ShortcutModifiers = Partial<
+  Pick<KeyboardEvent, 'metaKey' | 'ctrlKey' | 'altKey' | 'shiftKey'>
+>
+
 /** Keyboard state indexed by physical KeyboardEvent.code values. */
 export class Input {
   private readonly held = new Set<string>()
   private readonly pressed = new Set<string>()
   private readonly released = new Set<string>()
+  private readonly shortcuts = new Map<string, { code: string; modifiers: ShortcutModifiers }>()
+  private readonly pressedShortcuts = new Set<string>()
   private listening = false
   pointer: Vector2 | null = null
   readonly clicks: Vector2[] = []
@@ -78,11 +84,21 @@ export class Input {
     return this.released.has(code)
   }
 
+  /** Capture a shortcut and suppress its browser default while Input is listening. */
+  bindShortcut(action: string, code: string, modifiers: ShortcutModifiers = {}): void {
+    this.shortcuts.set(action, { code, modifiers: { ...modifiers } })
+  }
+
+  wasShortcutPressed(action: string): boolean {
+    return this.pressedShortcuts.has(action)
+  }
+
   /** Clear frame transitions after update and rendering, preserving held keys. */
   endFrame(): void {
     this.clicks.length = 0
     this.pressed.clear()
     this.released.clear()
+    this.pressedShortcuts.clear()
   }
 
   private readonly reset = (): void => {
@@ -98,6 +114,18 @@ export class Input {
   }
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
+    for (const [action, shortcut] of this.shortcuts) {
+      const matches = (['metaKey', 'ctrlKey', 'altKey', 'shiftKey'] as const).every(
+        (modifier) => Boolean(event[modifier]) === Boolean(shortcut.modifiers[modifier])
+      )
+      if (event.code === shortcut.code && matches) {
+        event.preventDefault()
+        // macOS may omit keyup for a key released while Command is held.
+        if (!event.repeat) {
+          this.pressedShortcuts.add(action)
+        }
+      }
+    }
     if (event.repeat || this.held.has(event.code)) {
       return
     }

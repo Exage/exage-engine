@@ -80,6 +80,45 @@ export class Renderer {
     this.context.fillRect(x, y, width, height)
   }
 
+  /** Draw an axis-aligned outline using the current camera and DPI transforms. */
+  drawRectOutline(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    color: string,
+    lineWidth = 2
+  ): void {
+    this.context.save()
+    try {
+      this.context.strokeStyle = color
+      this.context.lineWidth = lineWidth
+      this.context.strokeRect(x, y, width, height)
+    } finally {
+      this.context.restore()
+    }
+  }
+
+  /** Draw the exact outline of a box rotated around its center. */
+  drawRotatedRectOutline(
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    rotation: number,
+    color: string,
+    lineWidth = 2
+  ): void {
+    this.context.save()
+    try {
+      this.context.translate(x + width / 2, y + height / 2)
+      this.context.rotate(rotation)
+      this.drawRectOutline(-width / 2, -height / 2, width, height, color, lineWidth)
+    } finally {
+      this.context.restore()
+    }
+  }
+
   /** Draw a rectangle rotated around its center, preserving camera and DPI transforms. */
   drawRotatedRect(
     x: number,

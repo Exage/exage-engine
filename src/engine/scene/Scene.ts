@@ -1,9 +1,13 @@
 import type { Entity } from '@/engine/entities/Entity'
+import { CollisionWorld } from '@/engine/collision/CollisionWorld'
+import { HitboxWorld } from '@/engine/collision/HitboxWorld'
 import type { Renderer } from '@/engine/rendering/Renderer'
 
 /** Container that updates and renders entities in insertion order. */
 export class Scene {
   readonly entities: Entity[] = []
+  readonly collisions = new CollisionWorld(this.entities)
+  readonly hitboxes = new HitboxWorld(this.entities)
 
   add(entity: Entity): void {
     this.entities.push(entity)

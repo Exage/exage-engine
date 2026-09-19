@@ -11,6 +11,8 @@ Start with [Getting Started](Getting%20Started.md) to run the First Motion demo.
 ## Engine
 
 - [Camera2D](engine/Camera2D.md): bounded world following and screen-space UI.
+- [Collisions](engine/Collisions.md): box colliders, blocking movement, triggers, and swept queries.
+- [Hitboxes](engine/Hitboxes.md): named target regions, attack queries, and obstacle blocking.
 
 - [Engine](engine/Engine.md): startup, shutdown, scene selection, and frame order.
 - [Time](engine/Time.md): delta time, FPS, and focus recovery.

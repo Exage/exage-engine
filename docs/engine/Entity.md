@@ -14,6 +14,10 @@ Source: [Entity.ts](../../src/engine/entities/Entity.ts).
 
 Each new Entity creates its own [Transform](Transform.md). Changing one entity's position does not change another entity's position unless game code explicitly shares their Transform or vectors.
 
+`collider` is an optional `BoxCollider`, initially `null`. Assign one to participate in the scene's explicit collision queries and movement handling. See [Collisions](Collisions.md).
+
+`hitboxes` is a per-entity array of named `Hitbox` regions, initially empty. These regions participate in hit queries but do not block movement. Add each hitbox to its owning entity's array. See [Hitboxes](Hitboxes.md).
+
 The base `update()` and `render()` methods do nothing. Entity can be instantiated directly, and subclasses can override either method or both. A plain Entity does not move or draw anything.
 
 ## Example subclass
@@ -47,4 +51,4 @@ Entity does not own a game loop, subscribe to browser events, or retain a Render
 
 [Scene](Scene.md) calls `update(dt)` and `render(renderer)` on its entities. Register an object with `scene.add(entity)` and select the scene through `engine.setScene(scene)`. Creating an Entity alone does not display it; it needs rendering behavior and membership in the active scene.
 
-IDs, automatic removal, collision, physics, components, and parent-child relationships are not part of this base class. See [Architecture](../Architecture.md) for the dependency chain and [Renderer](Renderer.md) for drawing methods.
+IDs, automatic removal, rigid-body physics, components, and parent-child relationships are not part of this base class. See [Architecture](../Architecture.md) for the dependency chain and [Renderer](Renderer.md) for drawing methods.

@@ -15,11 +15,11 @@ Sources: [Player.ts](../../src/game/entities/Player.ts), [GameScene.ts](../../sr
 | S (`KeyS`) | Down      |
 | D (`KeyD`) | Right     |
 
-Each `update(dt)` resets a reusable direction vector, reads the held keys, and normalizes a nonzero direction. It multiplies that direction by `400 * dt` and adds the displacement to its position. Delta time is in seconds.
+Each `update(dt)` resets a reusable direction vector, reads the held keys, and normalizes a nonzero direction. It multiplies that direction by `400 * dt` and moves through the optional CollisionWorld supplied to its constructor. GameScene supplies this dependency, so the player's 40 × 40 collider stops and slides against solid obstacles. A standalone Player without a collision world moves freely. Delta time is in seconds.
 
 Opposing keys cancel on their axis. Releasing all keys stops movement. Diagonals travel at the same speed as horizontal and vertical movement. Reusing the direction vector avoids creating a new vector each frame.
 
-`render(renderer)` draws the rectangle at `transform.position`, with that position representing its top-left corner. The public readonly `width` and `height` are both 40. Rotation and scale are stored by Transform but do not affect this drawing yet.
+`render(renderer)` draws the rectangle and barrel rotated around the player's center. The public readonly `width` and `height` are both 40. Its movement collider stays axis-aligned while its body hitbox follows the visual rotation. Command+C shows both outlines. R has no assigned action.
 
 ## GameScene and application setup
 
@@ -41,7 +41,7 @@ engine.start()
 
 Pass the same logical dimensions to Engine and GameScene. GameScene uses dimensions only for initial placement; it does not retain Canvas or read device pixel ratio. Player and GameScene are game code and are not exported from `@/engine`.
 
-The frame chain is `Engine → GameScene → Player`. GameScene inherits entity updates from Scene. Its render method calls Scene rendering first, then draws the debug overlay. It receives a readonly view of FPS and delta time from the Engine-owned Time instance; Player still receives only Input. Engine remains independent of the game-specific classes.
+The frame chain is `Engine → GameScene → Player`. GameScene inherits entity updates from Scene. It draws the world background, entities, projectiles, and finally the debug overlay. It receives a readonly view of FPS and delta time from the Engine-owned Time instance; Player receives Input and the scene's CollisionWorld. Engine remains independent of the game-specific classes.
 
 ## Trying the demo
 
@@ -49,4 +49,6 @@ Run `npm run dev` and open the printed URL. Hold WASD to move and combine keys f
 
 GameScene constrains movement to a 6000 × 2000 world and follows the player with a bounded camera. Mouse movement rotates the player and barrel toward the cursor in world coordinates. Each left click fires one projectile at 1000 logical pixels per second. Forty stationary red targets are distributed across the world; a hit turns a target gray and consumes the projectile. Gray targets no longer block projectiles. Swept collision checks select the nearest active target along each frame segment. Projectiles expire after four seconds or when leaving the world. Reloading resets the scene. Physics and sprite animation are not implemented. See [Debug Overlay](Debug%20Overlay.md) for the displayed diagnostics.
 
-Automated tests cover cardinal directions, diagonal speed, opposing keys, release, zero delta, rendering through Renderer, equal travel at 30/60/120 FPS, and focus recovery through Engine with GameScene attached.
+The player and enemies have independent `body` hitboxes. The player's hitbox follows its visual rotation. Enemies have no physical colliders and do not block the player; getting hit disables their hitboxes. Projectile queries use these regions and attack-blocking colliders, allowing walls to shield enemies. Disabling a collider does not disable a hitbox. Command+C displays green colliders and purple hitboxes. See [Collisions](../engine/Collisions.md) and [Hitboxes](../engine/Hitboxes.md) for setup and limitations.
+
+Automated tests cover cardinal directions, diagonal speed, opposing keys, release, zero delta, rendering through Renderer, equal travel at 30/60/120 FPS, focus recovery, blocking and sliding, and projectile obstruction through Engine and GameScene integration.

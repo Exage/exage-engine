@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { Input } from '@/engine'
+import { BoxCollider, Entity, Input, Scene } from '@/engine'
 import type { Renderer } from '@/engine'
 import { Player } from '@/game/entities/Player'
 
@@ -11,6 +11,22 @@ function setup(keys: string[] = []) {
 }
 
 describe('Player', () => {
+  it('rotates the player and hitbox while keeping its movement collider axis-aligned', () => {
+    const scene = new Scene()
+    const player = new Player(new Input(), scene.collisions)
+    scene.add(player)
+    const wall = new Entity()
+    wall.transform.position.set(42, -100)
+    wall.collider = new BoxCollider(wall, 10, 300)
+    scene.add(wall)
+    player.aimAt(100, 100)
+    expect(player.transform.rotation).toBe(Math.PI / 4)
+    expect(player.collider.followRotation).toBe(false)
+    expect(player.collider.shape.rotation).toBe(0)
+    expect(player.collider.bounds).toEqual({ x: 0, y: 0, width: 40, height: 40 })
+    expect(player.hitboxes[0]!.shape.rotation).toBe(Math.PI / 4)
+  })
+
   it.each([
     ['KeyW', 0, -40],
     ['KeyS', 0, 40],

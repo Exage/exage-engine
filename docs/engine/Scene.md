@@ -17,6 +17,10 @@ Updates and draws follow insertion order. All updates finish before rendering be
 
 Each Scene has its own array. The array reference is readonly, but its contents are mutable. `add()` does not clone or deduplicate entities: adding the same instance twice causes two calls per pass. Scene iterates the live array; change its contents between passes rather than during update or rendering. Deferred additions and removals are not implemented.
 
+Each scene also owns `collisions`, a `CollisionWorld` backed by its live entity array. Use it to query overlaps, cast a collider along a displacement, or move an entity with blocking and sliding. Scene does not automatically resolve direct position changes. See [Collisions](Collisions.md).
+
+`hitboxes` is a separate `HitboxWorld` backed by the same live entity array. It queries named target regions and finds the nearest hitbox or attack-blocking collider along a sweep. It does not apply damage or resolve movement. See [Hitboxes](Hitboxes.md).
+
 ## Connecting a scene
 
 The following example can replace the Engine setup in `main.ts`. It demonstrates a static rectangle; it is not part of the current application entry point.

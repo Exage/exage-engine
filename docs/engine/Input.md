@@ -87,6 +87,12 @@ Pass `engine.input` when constructing the object. Calling `update(dt)` once per 
 - A keyup only records a release if Input was tracking that key as held.
 - A quick press and release between frames records both transitions: `wasPressed()` and `wasReleased()` are both `true`, while `isDown()` is `false`. If the key is pressed again before cleanup, all three are `true`. The sets record whether a transition occurred, not its count or order.
 
+## Shortcuts
+
+`bindShortcut(action, code, modifiers)` registers a named shortcut. For example, `input.bindShortcut('toggleColliders', 'KeyC', { metaKey: true })` captures Command+C. The optional modifier fields are `metaKey`, `ctrlKey`, `altKey`, and `shiftKey`; omitted fields must be false. Binding an existing action replaces its shortcut.
+
+Read `wasShortcutPressed(action)` during update. Modifiers are captured at keydown, so quick taps still work when Command is released before the next frame. Matching keydowns prevent the browser default action. Repeats do not activate the action, and a fresh keydown works even if macOS omitted the previous keyup while Command was held. `endFrame()`, focus loss, and stopping Input clear pending shortcut presses. Bindings persist across stop/start.
+
 ## Current scope
 
-Input handles keyboard events on `window`, rather than only on the Canvas. It does not filter text fields or prevent browser default actions. Mouse, touch, gamepad support, and action bindings are not implemented.
+Input handles keyboard events on `window`, rather than only on the Canvas. It does not filter text fields and only prevents default actions for registered shortcuts. Mouse movement and left clicks are tracked on the Canvas. Touch and gamepad support are not implemented.
