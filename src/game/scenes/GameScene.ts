@@ -1,10 +1,13 @@
 import { Camera2D, Scene } from '@/engine'
 import type { Input, Renderer, Time } from '@/engine'
 import { Enemy } from '@/game/entities/Enemy'
+import { Floor } from '@/game/entities/Floor'
 import { Projectile } from '@/game/entities/Projectile'
 import { Player } from '@/game/entities/Player'
+import { Wall } from '@/game/entities/Wall'
+import { demoLevel } from '@/game/levels/demoLevel'
 
-/** A large world with a bounded following camera and screen-space diagnostics. */
+/** A room and outdoor targets with a following camera and screen-space diagnostics. */
 export class GameScene extends Scene {
   readonly enemies: Enemy[] = []
   readonly projectiles: Projectile[] = []
@@ -13,6 +16,11 @@ export class GameScene extends Scene {
   readonly worldWidth = 6000
   readonly worldHeight = 2000
   private showColliders = false
+  private gameOver = false
+
+  get isGameOver(): boolean {
+    return this.gameOver
+  }
 
   constructor(
     private readonly input: Input,
@@ -24,16 +32,27 @@ export class GameScene extends Scene {
     this.input.bindShortcut('toggleColliders', 'KeyC', { metaKey: true })
     this.camera = new Camera2D(width, height)
     this.player = new Player(input, this.collisions)
-    this.player.transform.position.set(
-      (width - this.player.width) / 2,
-      (height - this.player.height) / 2
-    )
-    for (let x = 300; x < this.worldWidth; x += 600) {
-      for (let y = 220; y < this.worldHeight; y += 450) {
-        const enemy = new Enemy(x, y)
-        this.enemies.push(enemy)
-        this.add(enemy)
-      }
+    this.restart()
+  }
+
+  private restart(): void {
+    this.gameOver = false
+    this.player.controlsEnabled = true
+    this.projectiles.length = 0
+    this.enemies.length = 0
+    this.entities.length = 0
+    this.player.transform.rotation = 0
+    this.player.transform.position.set(demoLevel.playerSpawn.x, demoLevel.playerSpawn.y)
+    for (const { x, y, width, height, color } of demoLevel.floors) {
+      this.add(new Floor(x, y, width, height, color))
+    }
+    for (const { x, y, width: wallWidth, height: wallHeight } of demoLevel.walls) {
+      this.add(new Wall(x, y, wallWidth, wallHeight))
+    }
+    for (const { x, y } of demoLevel.enemies) {
+      const enemy = new Enemy(x, y)
+      this.enemies.push(enemy)
+      this.add(enemy)
     }
     this.add(this.player)
     this.updateCamera()
@@ -48,6 +67,10 @@ export class GameScene extends Scene {
     if (this.input.wasShortcutPressed('toggleColliders')) {
       this.showColliders = !this.showColliders
     }
+    if (this.gameOver && this.input.wasPressed('KeyR')) {
+      this.restart()
+      return
+    }
     super.update(dt)
     const position = this.player.transform.position
     const bounds = this.player.collider.bounds
@@ -58,22 +81,33 @@ export class GameScene extends Scene {
     if (pointer) {
       this.player.aimAt(pointer.x + this.camera.position.x, pointer.y + this.camera.position.y)
     }
-    for (const click of this.input.clicks) {
-      this.player.aimAt(click.x + this.camera.position.x, click.y + this.camera.position.y)
-      const angle = this.player.transform.rotation
-      this.projectiles.push(
-        new Projectile(
-          position.x + this.player.width / 2,
-          position.y + this.player.height / 2,
-          angle
+    if (!this.gameOver) {
+      for (const click of this.input.clicks) {
+        this.player.aimAt(click.x + this.camera.position.x, click.y + this.camera.position.y)
+        const angle = this.player.transform.rotation
+        this.projectiles.push(
+          new Projectile(
+            position.x + this.player.width / 2,
+            position.y + this.player.height / 2,
+            angle,
+            { owner: this.player }
+          )
         )
-      )
+      }
     }
     for (let index = this.projectiles.length - 1; index >= 0; index--) {
       const projectile = this.projectiles[index]!
       projectile.update(dt)
-      const closest = projectile.cast(this.hitboxes, { ignore: this.player })
-      if (closest?.kind === 'hitbox' && closest.entity instanceof Enemy) {
+      const enemyShot = projectile.owner instanceof Enemy
+      const closest = projectile.cast(this.hitboxes, {
+        ignore: projectile.owner ?? this.player,
+        filter: (entity) => !enemyShot || !(entity instanceof Enemy),
+      })
+      if (closest?.kind === 'hitbox' && enemyShot && closest.entity === this.player) {
+        this.gameOver = true
+        this.player.controlsEnabled = false
+      }
+      if (closest?.kind === 'hitbox' && !enemyShot && closest.entity instanceof Enemy) {
         closest.entity.hit = true
       }
       const point = projectile.transform.position
@@ -86,6 +120,14 @@ export class GameScene extends Scene {
         point.y > this.worldHeight
       ) {
         this.projectiles.splice(index, 1)
+      }
+    }
+    if (!this.gameOver) {
+      for (const enemy of this.enemies) {
+        const projectile = enemy.attack(dt, this.player, this.hitboxes)
+        if (projectile) {
+          this.projectiles.push(projectile)
+        }
       }
     }
   }
@@ -159,6 +201,13 @@ export class GameScene extends Scene {
     if (this.showColliders) {
       renderer.drawRect(8, 116, 320, 32, '#101218')
       renderer.drawText('Green: collider | Purple: hitbox', 16, 124)
+    }
+    if (this.gameOver) {
+      renderer.drawRect(0, this.camera.height - 80, this.camera.width, 80, '#101218')
+      renderer.drawText('Press [R] to restart', this.camera.width / 2, this.camera.height - 54, {
+        fontSize: 24,
+        align: 'center',
+      })
     }
   }
 }

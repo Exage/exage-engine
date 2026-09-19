@@ -3,6 +3,7 @@ import type { CollisionWorld, Input, Renderer } from '@/engine'
 
 /** A rectangle controlled by the physical WASD keys. */
 export class Player extends Entity {
+  controlsEnabled = true
   readonly width = 40
   readonly height = 40
   override readonly collider: BoxCollider = new BoxCollider(this, this.width, this.height)
@@ -19,6 +20,9 @@ export class Player extends Entity {
   }
 
   override update(dt: number): void {
+    if (!this.controlsEnabled) {
+      return
+    }
     this.direction.set(0, 0)
 
     if (this.input.isDown('KeyW')) {
@@ -45,6 +49,9 @@ export class Player extends Entity {
   }
 
   aimAt(x: number, y: number): void {
+    if (!this.controlsEnabled) {
+      return
+    }
     const dx = x - this.transform.position.x - this.width / 2
     const dy = y - this.transform.position.y - this.height / 2
     if (dx !== 0 || dy !== 0) {
@@ -55,14 +62,21 @@ export class Player extends Entity {
   override render(renderer: Renderer): void {
     const { x, y } = this.transform.position
     const angle = this.transform.rotation
-    renderer.drawRotatedRect(x, y, this.width, this.height, angle, '#66ccff')
+    renderer.drawRotatedRect(
+      x,
+      y,
+      this.width,
+      this.height,
+      angle,
+      this.controlsEnabled ? '#66ccff' : '#777f89'
+    )
     renderer.drawRotatedRect(
       x + this.width / 2 + Math.cos(angle) * 24 - 14,
       y + this.height / 2 + Math.sin(angle) * 24 - 5,
       28,
       10,
       angle,
-      '#d5f2ff'
+      this.controlsEnabled ? '#d5f2ff' : '#a4a9b0'
     )
   }
 }

@@ -3,7 +3,7 @@ import { CollisionWorld } from '@/engine/collision/CollisionWorld'
 import { HitboxWorld } from '@/engine/collision/HitboxWorld'
 import type { Renderer } from '@/engine/rendering/Renderer'
 
-/** Container that updates and renders entities in insertion order. */
+/** Updates entities in insertion order and renders them by ascending zIndex. */
 export class Scene {
   readonly entities: Entity[] = []
   readonly collisions = new CollisionWorld(this.entities)
@@ -26,7 +26,8 @@ export class Scene {
   }
 
   render(renderer: Renderer): void {
-    for (const entity of this.entities) {
+    const sortedEntities = [...this.entities].sort((a, b) => a.zIndex - b.zIndex)
+    for (const entity of sortedEntities) {
       entity.render(renderer)
     }
   }

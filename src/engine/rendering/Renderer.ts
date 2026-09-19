@@ -5,6 +5,7 @@ export interface TextOptions {
   /** Font size in logical pixels. */
   fontSize?: number
   fontFamily?: string
+  align?: CanvasTextAlign
 }
 
 export class Renderer {
@@ -138,12 +139,12 @@ export class Renderer {
     }
   }
 
-  /** Draw text in logical pixels, anchored at the top left. */
+  /** Draw text in logical pixels, anchored at the top with optional horizontal alignment. */
   drawText(text: string, x: number, y: number, options: TextOptions = {}): void {
-    const { color = '#ffffff', fontSize = 16, fontFamily = 'monospace' } = options
+    const { color = '#ffffff', fontSize = 16, fontFamily = 'monospace', align = 'left' } = options
     this.context.fillStyle = color
     this.context.font = `${fontSize}px ${fontFamily}`
-    this.context.textAlign = 'left'
+    this.context.textAlign = align
     this.context.textBaseline = 'top'
     this.context.fillText(text, x, y)
   }

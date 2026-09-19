@@ -14,6 +14,8 @@ Source: [Entity.ts](../../src/engine/entities/Entity.ts).
 
 Each new Entity creates its own [Transform](Transform.md). Changing one entity's position does not change another entity's position unless game code explicitly shares their Transform or vectors.
 
+`zIndex` defaults to `0`. Scene renders entities in ascending `zIndex` order, so higher values appear above lower values. Equal values preserve insertion order. Demo walls use `10` to render above the player.
+
 `collider` is an optional `BoxCollider`, initially `null`. Assign one to participate in the scene's explicit collision queries and movement handling. See [Collisions](Collisions.md).
 
 `hitboxes` is a per-entity array of named `Hitbox` regions, initially empty. These regions participate in hit queries but do not block movement. Add each hitbox to its owning entity's array. See [Hitboxes](Hitboxes.md).

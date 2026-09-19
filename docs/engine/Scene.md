@@ -13,9 +13,9 @@ Source: [Scene.ts](../../src/engine/scene/Scene.ts).
 | `update(dt)`       | Update each entity with the same delta time in seconds. |
 | `render(renderer)` | Render each entity using the same Renderer.             |
 
-Updates and draws follow insertion order. All updates finish before rendering begins. Later draws can cover earlier ones. An empty Scene safely does nothing.
+Updates follow insertion order. Drawing uses ascending entity `zIndex`, preserving insertion order for equal values. Sorting does not change the entity array or update order. All updates finish before rendering begins. Later draws can cover earlier ones. An empty Scene safely does nothing.
 
-Each Scene has its own array. The array reference is readonly, but its contents are mutable. `add()` does not clone or deduplicate entities: adding the same instance twice causes two calls per pass. Scene iterates the live array; change its contents between passes rather than during update or rendering. Deferred additions and removals are not implemented.
+Each Scene has its own array. The array reference is readonly, but its contents are mutable. `add()` does not clone or deduplicate entities: adding the same instance twice causes two calls per pass. Updates iterate the live array, while rendering iterates a sorted copy; change contents between passes rather than during update or rendering. Deferred additions and removals are not implemented.
 
 Each scene also owns `collisions`, a `CollisionWorld` backed by its live entity array. Use it to query overlaps, cast a collider along a displacement, or move an entity with blocking and sliding. Scene does not automatically resolve direct position changes. See [Collisions](Collisions.md).
 

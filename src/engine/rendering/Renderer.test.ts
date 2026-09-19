@@ -116,13 +116,15 @@ describe('Renderer', () => {
       color: '#00ff00',
       fontSize: 24,
       fontFamily: 'sans-serif',
+      align: 'center',
     })
     expect(context.fillText).toHaveBeenLastCalledWith('FPS: 60', 10, 20)
     expect(context.font).toBe('24px sans-serif')
     expect(context.fillStyle).toBe('#00ff00')
-    expect(context.textAlign).toBe('left')
+    expect(context.textAlign).toBe('center')
     expect(context.textBaseline).toBe('top')
     renderer.drawText('Delta: 0.016', 10, 50)
+    expect(context.textAlign).toBe('left')
     expect(context.font).toBe('16px monospace')
     expect(context.fillStyle).toBe('#ffffff')
     renderer.drawRect(0, 0, 10, 10, '#000000')

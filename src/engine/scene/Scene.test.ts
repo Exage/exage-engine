@@ -37,5 +37,12 @@ describe('Scene', () => {
     expect(renderer.drawRect).toHaveBeenNthCalledWith(2, 4, 0, 10, 10)
     expect(scene.entities).toEqual([first, second])
     expect(new Scene().entities).toEqual([])
+
+    first.zIndex = 10
+    calls.length = 0
+    scene.update(0.02)
+    scene.render(renderer)
+    expect(calls).toEqual(['update first', 'update second', 'render second', 'render first'])
+    expect(scene.entities).toEqual([first, second])
   })
 })

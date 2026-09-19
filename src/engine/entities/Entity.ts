@@ -6,6 +6,8 @@ import type { Renderer } from '@/engine/rendering/Renderer'
 /** Base game object with its own transform and optional lifecycle behavior. */
 export class Entity {
   transform = new Transform()
+  /** Higher values render above lower values within the scene. */
+  zIndex = 0
   collider: BoxCollider | null = null
   readonly hitboxes: Hitbox[] = []
 
