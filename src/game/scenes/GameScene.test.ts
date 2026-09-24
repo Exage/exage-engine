@@ -9,6 +9,24 @@ import { demoLevel } from '@/game/levels/demoLevel'
 afterEach(() => vi.unstubAllGlobals())
 
 describe('GameScene integration', () => {
+  it('approaches visible players and freezes pursuit after game over', () => {
+    const scene = new GameScene(new Input(), new Time(), 800, 600)
+    const enemy = scene.enemies[0]!
+    scene.enemies[1]!.hit = true
+    scene.player.transform.position.set(3000, 1004)
+    enemy.transform.position.set(3500, 1000)
+    scene.update(0.25)
+    expect(enemy.transform.position.x).toBeCloseTo(3440)
+    scene.update(0.25)
+    expect(enemy.transform.position.x).toBeCloseTo(3396)
+    scene.player.transform.position.x = 2900
+    scene.projectiles.push(new Projectile(2920, 1024, 0, { owner: enemy }))
+    scene.update(0)
+    expect(scene.isGameOver).toBe(true)
+    scene.update(1)
+    expect(enemy.transform.position.x).toBeCloseTo(3396)
+  })
+
   it('aims at the player, disables controls on impact, and restores the level on R', () => {
     const input = new Input()
     const scene = new GameScene(input, new Time(), 800, 600)
@@ -56,7 +74,9 @@ describe('GameScene integration', () => {
     expect(scene.player.transform.rotation).toBe(0)
     expect(scene.projectiles).toHaveLength(0)
     expect(scene.enemies.every((target) => !target.hit && target.hitboxes[0]!.enabled)).toBe(true)
-    expect(scene.enemies.map((target) => target.transform.position)).toEqual(demoLevel.enemies)
+    expect(scene.enemies.map((target) => target.transform.position)).toEqual(
+      demoLevel.enemies.map(({ x, y }) => ({ x, y }))
+    )
     expect(scene.entities).toHaveLength(
       demoLevel.floors.length + demoLevel.walls.length + demoLevel.enemies.length + 1
     )
@@ -175,15 +195,26 @@ describe('GameScene integration', () => {
 
   it('spawns the configured enemies and walls with a clear player spawn', () => {
     const scene = new GameScene(new Input(), new Time(), 800, 600)
-    expect(scene.enemies.map((enemy) => enemy.transform.position)).toEqual(demoLevel.enemies)
+    expect(scene.enemies.map((enemy) => enemy.transform.position)).toEqual(
+      demoLevel.enemies.map(({ x, y }) => ({ x, y }))
+    )
     expect(scene.entities.filter((entity) => entity instanceof Wall)).toHaveLength(
       demoLevel.walls.length
     )
+    for (const [index, spawn] of demoLevel.enemies.entries()) {
+      const { facingAngleDegrees, ...options } = spawn.options ?? {}
+      expect(scene.enemies[index]!.config).toMatchObject(options)
+      if (facingAngleDegrees !== undefined) {
+        expect(scene.enemies[index]!.transform.rotation).toBeCloseTo(
+          facingAngleDegrees * (Math.PI / 180)
+        )
+      }
+    }
     expect(scene.player.transform.position).toMatchObject(demoLevel.playerSpawn)
     expect(scene.collisions.overlaps(scene.player.collider)).toEqual([])
   })
 
-  it('blocks movement at the room wall and allows entry through the doorway', () => {
+  it('blocks movement at the side wall and allows entry through the doorway', () => {
     const input = new Input()
     vi.spyOn(input, 'isDown').mockImplementation((key) => key === 'KeyD')
     const scene = new GameScene(input, new Time(), 1280, 720)
@@ -197,21 +228,23 @@ describe('GameScene integration', () => {
     expect(scene.collisions.overlaps(scene.player.collider)).toEqual([])
   })
 
-  it('shields indoor enemies behind walls but allows shots through the doorway', () => {
+  it('shields an indoor enemy behind a wall but allows a clear shot inside', () => {
     const scene = new GameScene(new Input(), new Time(), 1280, 720)
+    const enemy = scene.enemies[1]!
+    enemy.transform.position.set(1070, 320)
     scene.projectiles.push(new Projectile(950, 344, 0))
     scene.update(0.3)
     expect(scene.projectiles).toHaveLength(0)
-    expect(scene.enemies.every((enemy) => !enemy.hit)).toBe(true)
+    expect(scene.enemies.every((target) => !target.hit)).toBe(true)
 
-    scene.projectiles.push(new Projectile(1200, 160, Math.atan2(344 - 160, 1094 - 1200)))
+    scene.projectiles.push(new Projectile(1200, 344, Math.PI))
     scene.update(0.3)
     expect(scene.projectiles).toHaveLength(0)
-    expect(scene.enemies[1]!.hit).toBe(true)
-    expect(scene.enemies.filter((enemy) => enemy.hit)).toHaveLength(1)
+    expect(enemy.hit).toBe(true)
+    expect(scene.enemies.filter((target) => target.hit)).toHaveLength(1)
   })
 
-  it('toggles green colliders and purple hitboxes with Command+C and independent rotation', () => {
+  it('toggles colliders, hitboxes, and enemy vision with Command+C', () => {
     const windowTarget = new EventTarget()
     vi.stubGlobal('window', windowTarget)
     vi.stubGlobal('document', new EventTarget())
@@ -222,12 +255,14 @@ describe('GameScene integration', () => {
     const renderer = {
       drawRect: vi.fn(),
       drawRotatedRect: vi.fn(),
+      drawSector: vi.fn(),
       drawRectOutline: vi.fn(),
       drawRotatedRectOutline: vi.fn(),
       drawText: vi.fn(),
       setCamera: vi.fn(),
     }
     const frame = (): void => {
+      renderer.drawSector.mockClear()
       renderer.drawRectOutline.mockClear()
       renderer.drawRotatedRectOutline.mockClear()
       renderer.setCamera.mockClear()
@@ -247,9 +282,11 @@ describe('GameScene integration', () => {
     input.start()
     try {
       frame()
+      expect(renderer.drawSector).not.toHaveBeenCalled()
       expect(renderer.drawRectOutline).not.toHaveBeenCalled()
       expect(press(false).defaultPrevented).toBe(false)
       frame()
+      expect(renderer.drawSector).not.toHaveBeenCalled()
       expect(renderer.drawRectOutline).not.toHaveBeenCalled()
       expect(press(true).defaultPrevented).toBe(true)
       frame()
@@ -259,6 +296,24 @@ describe('GameScene integration', () => {
       expect(
         renderer.drawRectOutline.mock.calls.filter((call) => call[4] === '#c084fc')
       ).toHaveLength(demoLevel.enemies.length + 1)
+      expect(renderer.drawSector).toHaveBeenCalledTimes(scene.enemies.length)
+      for (const enemy of scene.enemies) {
+        expect(renderer.drawSector).toHaveBeenCalledWith(
+          enemy.transform.position.x + enemy.width / 2,
+          enemy.transform.position.y + enemy.height / 2,
+          enemy.config.vision.range,
+          enemy.transform.rotation,
+          (enemy.config.vision.angleDegrees * Math.PI) / 180,
+          'rgba(250, 204, 21, 0.10)',
+          '#facc15'
+        )
+      }
+      expect(renderer.drawSector.mock.invocationCallOrder[0]).toBeGreaterThan(
+        renderer.setCamera.mock.invocationCallOrder[0]!
+      )
+      expect(renderer.drawSector.mock.invocationCallOrder.at(-1)).toBeLessThan(
+        renderer.setCamera.mock.invocationCallOrder[1]!
+      )
       expect(renderer.drawRectOutline).toHaveBeenCalledWith(3000, 1000, 40, 40, '#c084fc', 1)
       scene.player.transform.rotation = Math.PI / 4
       windowTarget.dispatchEvent(Object.assign(new Event('keydown'), { code: 'KeyR' }))
@@ -292,6 +347,7 @@ describe('GameScene integration', () => {
       // A fresh press must work even when macOS has omitted the previous C keyup.
       press(true)
       frame()
+      expect(renderer.drawSector).not.toHaveBeenCalled()
       expect(renderer.drawRectOutline).not.toHaveBeenCalled()
       expect(renderer.drawRotatedRectOutline).not.toHaveBeenCalled()
     } finally {

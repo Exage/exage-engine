@@ -139,6 +139,34 @@ export class Renderer {
     }
   }
 
+  /** Draw a filled, outlined sector in world coordinates; angles are in radians. */
+  drawSector(
+    x: number,
+    y: number,
+    radius: number,
+    direction: number,
+    angle: number,
+    fillColor: string,
+    outlineColor: string
+  ): void {
+    this.context.save()
+    try {
+      this.context.fillStyle = fillColor
+      this.context.strokeStyle = outlineColor
+      this.context.lineWidth = 1
+      this.context.beginPath()
+      if (angle < Math.PI * 2) {
+        this.context.moveTo(x, y)
+      }
+      this.context.arc(x, y, radius, direction - angle / 2, direction + angle / 2)
+      this.context.closePath()
+      this.context.fill()
+      this.context.stroke()
+    } finally {
+      this.context.restore()
+    }
+  }
+
   /** Draw text in logical pixels, anchored at the top with optional horizontal alignment. */
   drawText(text: string, x: number, y: number, options: TextOptions = {}): void {
     const { color = '#ffffff', fontSize = 16, fontFamily = 'monospace', align = 'left' } = options

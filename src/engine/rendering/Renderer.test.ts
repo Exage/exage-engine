@@ -16,6 +16,12 @@ function setup(pixelRatio = 1, width = 1280, height = 720) {
     setTransform: vi.fn(),
     fillRect: vi.fn(),
     fillText: vi.fn(),
+    beginPath: vi.fn(),
+    moveTo: vi.fn(),
+    arc: vi.fn(),
+    closePath: vi.fn(),
+    fill: vi.fn(),
+    stroke: vi.fn(),
     fillStyle: '',
     font: '',
     textAlign: '',
@@ -32,6 +38,27 @@ function setup(pixelRatio = 1, width = 1280, height = 720) {
 }
 
 describe('Renderer', () => {
+  it('draws sectors and full circles while preserving the camera and DPI transform', () => {
+    const { renderer, context } = setup(2)
+    renderer.setCamera(new Camera2D(1280, 720))
+    context.setTransform.mockClear()
+    renderer.drawSector(100, 200, 600, Math.PI, Math.PI / 2, '#1234', '#abcd')
+    expect(context.moveTo).toHaveBeenCalledWith(100, 200)
+    expect(context.arc).toHaveBeenCalledWith(100, 200, 600, Math.PI * 0.75, Math.PI * 1.25)
+    expect(context.fill).toHaveBeenCalledOnce()
+    expect(context.stroke).toHaveBeenCalledOnce()
+    expect(context.restore).toHaveBeenCalledOnce()
+    context.moveTo.mockClear()
+    renderer.drawSector(100, 200, 600, 0, Math.PI * 2, '#1234', '#abcd')
+    expect(context.moveTo).not.toHaveBeenCalled()
+    expect(context.setTransform).not.toHaveBeenCalled()
+    context.arc.mockImplementationOnce(() => {
+      throw new Error('Canvas failure')
+    })
+    expect(() => renderer.drawSector(0, 0, 1, 0, 1, '#1234', '#abcd')).toThrow('Canvas failure')
+    expect(context.restore).toHaveBeenCalledTimes(3)
+  })
+
   it('resizes logical dimensions and refreshes density without stretching coordinates', () => {
     const { renderer, canvas, context, display } = setup(2)
     renderer.resize(800, 600)

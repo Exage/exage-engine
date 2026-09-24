@@ -25,5 +25,7 @@ Start with [Getting Started](Getting%20Started.md) to run the First Motion demo.
 
 ## Game
 
+- [Enemies](game/Enemy.md): per-spawn dimensions, hitboxes, vision, and weapon settings.
+
 - [Player and GameScene](game/Player.md): WASD movement and demo composition.
 - [Debug Overlay](game/Debug%20Overlay.md): live timing, entity count, and player coordinates.

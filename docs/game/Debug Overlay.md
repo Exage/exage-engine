@@ -17,7 +17,7 @@ All panel coordinates use logical pixels, so Renderer handles DPI automatically.
 
 Source: [GameScene.ts](../../src/game/scenes/GameScene.ts). See [Time](../engine/Time.md), [Renderer](../engine/Renderer.md), and [Player and GameScene](Player.md) for related behavior.
 
-## Collider and hitbox outlines
+## Collider, hitbox, and vision overlays
 
 Press **Command+C** while the game is focused to toggle green outlines for enabled colliders, including the player, projectiles, and added obstacles or triggers. Enemies have no physical colliders. Outlines are hidden initially. They follow the exact collision shape and camera, and render above world objects but below the diagnostic panel. Disabled colliders are omitted.
 
@@ -26,3 +26,5 @@ Enabled hitboxes are drawn in **purple** (`#c084fc`) with a thinner line so coin
 There is no collider-rotation toggle in the demo. Aiming rotates the player's visual body and hitbox without changing its movement collider.
 
 Holding the shortcut does not repeatedly toggle the overlay. The game captures Command+C and prevents its normal browser copy action while Input is running. Plain C does not toggle outlines.
+
+Enemy vision sectors toggle with the same **Command+C** shortcut. Yellow sectors indicate idle sight; orange sectors indicate that the enemy sees the player. The sector shows the configured range and angle without clipping against walls; detection separately checks obstacle occlusion. Defeated enemies and enemies with disabled sight are omitted. See [Enemy configuration and vision](Enemy.md) for defaults and per-spawn overrides.

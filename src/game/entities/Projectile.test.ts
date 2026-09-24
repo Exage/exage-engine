@@ -96,9 +96,9 @@ describe('Shooting', () => {
     input.endFrame()
     scene.update(0.1)
     expect(far.hit).toBe(false)
-    const renderer = { drawRect: vi.fn() }
+    const renderer = { drawRotatedRect: vi.fn() }
     near.render(renderer as unknown as Renderer)
-    expect(renderer.drawRect).toHaveBeenCalledWith(3080, 996, 48, 48, '#777f89')
+    expect(renderer.drawRotatedRect).toHaveBeenCalledWith(3080, 996, 48, 48, 0, '#777f89')
   })
 
   it('expires projectiles that do not hit targets', () => {

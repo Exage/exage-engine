@@ -49,8 +49,8 @@ export class GameScene extends Scene {
     for (const { x, y, width: wallWidth, height: wallHeight } of demoLevel.walls) {
       this.add(new Wall(x, y, wallWidth, wallHeight))
     }
-    for (const { x, y } of demoLevel.enemies) {
-      const enemy = new Enemy(x, y)
+    for (const { x, y, options } of demoLevel.enemies) {
+      const enemy = new Enemy(x, y, options)
       this.enemies.push(enemy)
       this.add(enemy)
     }
@@ -124,7 +124,7 @@ export class GameScene extends Scene {
     }
     if (!this.gameOver) {
       for (const enemy of this.enemies) {
-        const projectile = enemy.attack(dt, this.player, this.hitboxes)
+        const projectile = enemy.attack(dt, this.player, this.hitboxes, this.collisions)
         if (projectile) {
           this.projectiles.push(projectile)
         }
@@ -165,6 +165,9 @@ export class GameScene extends Scene {
         projectile.render(renderer)
       }
       if (this.showColliders) {
+        for (const enemy of this.enemies) {
+          enemy.renderVision(renderer)
+        }
         for (const entity of [...this.entities, ...this.projectiles]) {
           const collider = entity.collider
           if (collider?.enabled) {
@@ -199,8 +202,9 @@ export class GameScene extends Scene {
     renderer.drawText(`Entities: ${this.entities.length + this.projectiles.length}`, 16, 64)
     renderer.drawText(`Player: ${x.toFixed(1)}, ${y.toFixed(1)}`, 16, 88)
     if (this.showColliders) {
-      renderer.drawRect(8, 116, 320, 32, '#101218')
+      renderer.drawRect(8, 116, 400, 56, '#101218')
       renderer.drawText('Green: collider | Purple: hitbox', 16, 124)
+      renderer.drawText('Vision: yellow idle | orange sees player', 16, 148)
     }
     if (this.gameOver) {
       renderer.drawRect(0, this.camera.height - 80, this.camera.width, 80, '#101218')
