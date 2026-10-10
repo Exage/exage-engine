@@ -102,7 +102,7 @@ describe('Input', () => {
   })
 })
 
-it('maps canvas mouse coordinates, queues only left clicks, and cleans up listeners', () => {
+it('maps mouse coordinates, separates left/right clicks, and cleans up listeners', () => {
   const { windowTarget } = setup()
   const canvas = Object.assign(new EventTarget(), {
     style: { width: '1000px' },
@@ -117,15 +117,23 @@ it('maps canvas mouse coordinates, queues only left clicks, and cleans up listen
   expect(input.pointer).toMatchObject({ x: 300, y: 200 })
   mouse('mousedown', 2)
   expect(input.clicks).toHaveLength(0)
+  expect(input.rightClicks).toEqual([input.pointer])
+  const contextMenu = new Event('contextmenu', { cancelable: true })
+  canvas.dispatchEvent(contextMenu)
+  expect(contextMenu.defaultPrevented).toBe(true)
   mouse('mousedown')
   expect(input.clicks).toHaveLength(1)
   input.endFrame()
   expect(input.clicks).toHaveLength(0)
+  expect(input.rightClicks).toHaveLength(0)
   mouse('mousedown')
   windowTarget.dispatchEvent(new Event('blur'))
   expect(input.pointer).toBeNull()
   expect(input.clicks).toHaveLength(0)
   input.stop()
+  const detachedMenu = new Event('contextmenu', { cancelable: true })
+  canvas.dispatchEvent(detachedMenu)
+  expect(detachedMenu.defaultPrevented).toBe(false)
   mouse('mousedown')
   expect(input.clicks).toHaveLength(0)
 })

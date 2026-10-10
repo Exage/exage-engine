@@ -75,6 +75,6 @@ Both queries observe additions, removals, and enable/disable changes on the next
 
 ## Demo integration
 
-The player and enemies each have one `body` hitbox. The player's body follows its visual rotation while its physical collider stays axis-aligned. Enemies have no physical colliders; their hitboxes stay aligned with their unrotated rendering. Projectiles query `Scene.hitboxes`, ignore their firing player, and stop at the first target or wall. The game's existing reaction turns a hit enemy gray and disables its hitboxes. Setting the enemy's `hit` flag back to false re-enables its regions. There is no health system in the engine.
+The player and enemies each have one `body` hitbox. The player's body follows its visual rotation while its physical collider stays axis-aligned. Enemies have no physical colliders; their hitboxes follow body position and rotation, using the visual body center as their shared pivot. Projectiles query `Scene.hitboxes`, ignore their firing player, and stop at the first target or wall. The game's existing reaction turns a hit enemy gray and disables its hitboxes. Setting the enemy's `hit` flag back to false re-enables its regions. There is no health system in the engine.
 
 Press **Command+C** to toggle debug outlines: physical colliders are green and hitboxes are purple (`#c084fc`). Hitbox outlines use a thinner line so matching collider edges remain visible. Disabled hitboxes are omitted.

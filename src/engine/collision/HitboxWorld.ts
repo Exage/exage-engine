@@ -24,7 +24,8 @@ export type HitResult =
 
 /** Scene queries for attacks and target regions; damage remains game-owned. */
 export class HitboxWorld {
-  constructor(private readonly entities: readonly Entity[]) {}
+  /** Live scene entities, also available to game-owned navigation queries. */
+  constructor(readonly entities: readonly Entity[]) {}
 
   overlaps(shape: OrientedBox, options: HitQueryOptions = {}): Hitbox[] {
     const hits: Hitbox[] = []

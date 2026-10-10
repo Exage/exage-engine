@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { CollisionWorld, HitboxWorld, Input } from '@/engine'
+import { boxPenetration, HitboxWorld, Input } from '@/engine'
 import type { Renderer } from '@/engine'
 import { Enemy } from '@/game/entities/Enemy'
 import type { EnemyOptions } from '@/game/entities/EnemyConfig'
@@ -16,6 +16,32 @@ function setup(options: EnemyOptions = {}) {
 }
 
 describe('Enemy perception and configuration', () => {
+  it('moves an offset hitbox with the enemy and rotates it around the body center', () => {
+    const enemy = new Enemy(100, 200, {
+      width: 80,
+      height: 60,
+      facingAngleDegrees: 90,
+      hitbox: { width: 20, height: 10, offsetX: 50, offsetY: 10 },
+    })
+    const hitbox = enemy.hitboxes[0]!
+    expect(hitbox.shape).toEqual({
+      x: 145,
+      y: 245,
+      width: 20,
+      height: 10,
+      rotation: Math.PI / 2,
+    })
+    const world = new HitboxWorld([enemy])
+    const probe = { x: 155, y: 250, width: 2, height: 2, rotation: 0 }
+    expect(world.cast(probe, 0, 0)?.entity).toBe(enemy)
+    enemy.transform.position.set(300, 400)
+    expect(hitbox.shape).toMatchObject({ x: 345, y: 445, rotation: Math.PI / 2 })
+    expect(world.cast(probe, 0, 0)).toBeNull()
+    expect(world.cast({ ...probe, x: 355, y: 450 }, 0, 0)?.entity).toBe(enemy)
+    expect(world.cast({ ...probe, x: 360, y: 415 }, 0, 0)).toBeNull()
+    expect(enemy.collider).toBeNull()
+  })
+
   it('uses defaults, merges nested overrides, and centers independent hitboxes', () => {
     const defaultEnemy = new Enemy(0, 0)
     expect(defaultEnemy.config).toMatchObject({
@@ -110,7 +136,7 @@ describe('Enemy perception and configuration', () => {
     expect(enemy.canSee(player, world)).toBe(true)
   })
 
-  it('never turns toward unseen targets and stops tracking when sight is lost', () => {
+  it('aims only at visible players and investigates the remembered position after sight is lost', () => {
     const { enemy, player, world } = setup()
     player.transform.position.set(-220, -20)
     expect(enemy.attack(2, player, world)).toBeNull()
@@ -133,7 +159,7 @@ describe('Enemy perception and configuration', () => {
     expect(enemy.transform.rotation).toBe(direction)
     renderer.drawRotatedRect.mockClear()
     enemy.render(renderer as unknown as Renderer)
-    expect(renderer.drawRotatedRect.mock.calls[0]).toEqual([-24, -24, 48, 48, direction, '#ef4444'])
+    expect(renderer.drawRotatedRect.mock.calls[0]).toEqual([176, 76, 48, 48, direction, '#ef4444'])
     enemy.hit = true
     player.transform.position.set(180, 80)
     expect(enemy.attack(2, player, world)).toBeNull()
@@ -188,39 +214,58 @@ describe('Enemy perception and configuration', () => {
   })
 
   it('stays still for nearby, unseen, occluded, and defeated targets', () => {
-    const { enemy, player, world } = setup()
     for (const [x, y] of [
       [180, -20],
       [-520, -20],
       [680, -20],
     ]) {
+      const { enemy, player, world } = setup()
       player.transform.position.set(x!, y!)
       enemy.attack(1, player, world)
       expect(enemy.transform.position).toMatchObject({ x: -24, y: -24 })
     }
+    const { enemy, player, world } = setup()
     player.transform.position.set(480, -20)
     const wall = new Wall(100, -50, 20, 100)
     enemy.attack(1, player, new HitboxWorld([enemy, player, wall]))
     expect(enemy.transform.position).toMatchObject({ x: -24, y: -24 })
     enemy.attack(0.1, player, world)
-    const position = enemy.transform.position.clone()
     enemy.attack(1, player, new HitboxWorld([enemy, player, wall]))
-    expect(enemy.transform.position).toEqual(position)
+    expect(enemy.transform.position.x).toBeGreaterThan(0)
+    expect(boxPenetration(enemy.hitboxes[0]!.shape, wall.collider.shape)).toBeNull()
+    const position = enemy.transform.position.clone()
     enemy.hit = true
     enemy.attack(1, player, world)
     expect(enemy.transform.position).toEqual(position)
   })
 
-  it('stops its body at a thin wall even when its sight ray clears the edge', () => {
+  it('routes the whole body around a wall even when its sight ray clears the edge', () => {
     const { enemy, player } = setup()
     player.transform.position.set(580, -20)
     const wall = new Wall(60, 10, 2, 100)
     const entities = [enemy, player, wall]
     const world = new HitboxWorld(entities)
     expect(enemy.canSee(player, world)).toBe(true)
-    enemy.attack(2, player, world, new CollisionWorld(entities))
-    expect(enemy.transform.position.x).toBeCloseTo(12)
-    expect(enemy.transform.position.y).toBeCloseTo(-24)
+    let passedAbove = false
+    for (let frame = 0; frame < 30; frame++) {
+      enemy.attack(0.1, player, world)
+      expect(boxPenetration(enemy.hitboxes[0]!.shape, wall.collider.shape)).toBeNull()
+      passedAbove ||= enemy.transform.position.y < -24
+    }
+    expect(passedAbove).toBe(true)
+    expect(enemy.transform.position.x).toBeGreaterThan(wall.transform.position.x + wall.width)
+    expect(
+      Math.hypot(
+        player.transform.position.x +
+          player.width / 2 -
+          enemy.transform.position.x -
+          enemy.width / 2,
+        player.transform.position.y +
+          player.height / 2 -
+          enemy.transform.position.y -
+          enemy.height / 2
+      )
+    ).toBeCloseTo(enemy.config.movement.stopDistance)
     expect(enemy.playerVisible).toBe(true)
   })
 

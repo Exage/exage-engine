@@ -1,9 +1,17 @@
 import { BoxCollider, Entity, Hitbox, Vector2 } from '@/engine'
 import type { CollisionWorld, Input, Renderer } from '@/engine'
+import type { Weapon } from '@/game/entities/Weapon'
 
 /** A rectangle controlled by the physical WASD keys. */
 export class Player extends Entity {
   controlsEnabled = true
+  invulnerable = false
+  hiddenFromEnemies = false
+  weapon: Weapon | null = null
+
+  get canEquipWeapon(): boolean {
+    return this.controlsEnabled
+  }
   readonly width = 40
   readonly height = 40
   override readonly collider: BoxCollider = new BoxCollider(this, this.width, this.height)
@@ -59,6 +67,14 @@ export class Player extends Entity {
     }
   }
 
+  die(): void {
+    if (import.meta.env.VITE_ENVIRONMENT === 'development' && this.invulnerable) {
+      return
+    }
+    this.controlsEnabled = false
+    this.weapon?.drop()
+  }
+
   override render(renderer: Renderer): void {
     const { x, y } = this.transform.position
     const angle = this.transform.rotation
@@ -70,13 +86,6 @@ export class Player extends Entity {
       angle,
       this.controlsEnabled ? '#66ccff' : '#777f89'
     )
-    renderer.drawRotatedRect(
-      x + this.width / 2 + Math.cos(angle) * 24 - 14,
-      y + this.height / 2 + Math.sin(angle) * 24 - 5,
-      28,
-      10,
-      angle,
-      this.controlsEnabled ? '#d5f2ff' : '#a4a9b0'
-    )
+    this.weapon?.renderHeld(renderer, '#d5f2ff')
   }
 }

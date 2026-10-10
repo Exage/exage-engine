@@ -19,7 +19,7 @@ Each `update(dt)` resets a reusable direction vector, reads the held keys, and n
 
 Opposing keys cancel on their axis. Releasing all keys stops movement. Diagonals travel at the same speed as horizontal and vertical movement. Reusing the direction vector avoids creating a new vector each frame.
 
-`render(renderer)` draws the rectangle and barrel rotated around the player's center. The public readonly `width` and `height` are both 40. Its movement collider stays axis-aligned while its body hitbox follows the visual rotation. Command+C shows both outlines. R has no assigned action.
+`render(renderer)` draws the rectangle and any held weapon rotated around the player's center. The public readonly `width` and `height` are both 40. Its movement collider stays axis-aligned while its body hitbox follows the visual rotation. Command+C shows both outlines. R restarts after death and resets the AI lab at any time.
 
 ## GameScene and application setup
 
@@ -47,8 +47,12 @@ The frame chain is `Engine → GameScene → Player`. GameScene inherits entity 
 
 Run `npm run dev` and open the printed URL. Hold WASD to move and combine keys for diagonal movement. Switching to another tab clears input; returning does not restore held keys or include inactive time in movement. Release and press a key again to resume.
 
-GameScene constrains movement to a 6000 × 2000 world and follows the player with a bounded camera. Mouse movement rotates the player and barrel toward the cursor in world coordinates. Each left click fires one projectile at 1000 logical pixels per second. Forty stationary red targets are distributed across the world; a hit turns a target gray and consumes the projectile. Gray targets no longer block projectiles. Swept collision checks select the nearest active target along each frame segment. Projectiles expire after four seconds or when leaving the world. Reloading resets the scene. Physics and sprite animation are not implemented. See [Debug Overlay](Debug%20Overlay.md) for the displayed diagnostics.
+Press **Escape** to pause and press it again to resume. A dimmed overlay shows the pause state and resume hint. Pausing freezes player movement and aiming, enemies, projectiles, and combat timers while rendering and input handling continue. Holding Escape does not repeatedly toggle pause. Clicks made while paused or on the resume frame are discarded. In development, Escape closes an open cheat menu first and preserves any existing manual pause.
+
+GameScene constrains movement to a 6000 × 2000 world and follows the player with a bounded camera. Mouse movement rotates the player and barrel toward the cursor in world coordinates. Left click fires the held weapon if it has ammunition and its firing cooldown has elapsed. E picks up or swaps a nearby gun, and right click drops it. Each gun retains its own remaining ammo after transfer. The demo contains guarding and patrolling enemies; ordinary enemies die from one hit, while Fat enemies survive until three hits or their bleeding timer expires. Gray targets no longer block projectiles. Swept collision checks select the nearest active target along each frame segment. Projectiles expire after four seconds or when leaving the world. Reloading resets the scene. Physics and sprite animation are not implemented. See [Debug Overlay](Debug%20Overlay.md) for the displayed diagnostics.
 
 The player and enemies have independent `body` hitboxes. The player's hitbox follows its visual rotation. Enemies have no physical colliders and do not block the player; getting hit disables their hitboxes. Projectile queries use these regions and attack-blocking colliders, allowing walls to shield enemies. Disabling a collider does not disable a hitbox. Command+C displays green colliders and purple hitboxes. See [Collisions](../engine/Collisions.md) and [Hitboxes](../engine/Hitboxes.md) for setup and limitations.
 
 Automated tests cover cardinal directions, diagonal speed, opposing keys, release, zero delta, rendering through Renderer, equal travel at 30/60/120 FPS, focus recovery, blocking and sliding, and projectile obstruction through Engine and GameScene integration.
+
+Press **F2** to open the [enemy AI lab](Enemy%20AI%20Lab.md). Its bottom panel shows controls and the current [weapon](Weapons.md), including remaining ammunition.

@@ -14,6 +14,7 @@ export class Input {
   private listening = false
   pointer: Vector2 | null = null
   readonly clicks: Vector2[] = []
+  readonly rightClicks: Vector2[] = []
 
   constructor(private readonly canvas?: HTMLCanvasElement) {}
 
@@ -42,6 +43,13 @@ export class Input {
     if (event.button === 0 && this.pointer) {
       this.clicks.push(this.pointer.clone())
     }
+    if (event.button === 2 && this.pointer) {
+      this.rightClicks.push(this.pointer.clone())
+    }
+  }
+
+  private readonly onContextMenu = (event: Event): void => {
+    event.preventDefault()
   }
 
   start(): void {
@@ -55,6 +63,7 @@ export class Input {
     document.addEventListener('visibilitychange', this.onVisibilityChange)
     this.canvas?.addEventListener('mousemove', this.onMouseMove)
     this.canvas?.addEventListener('mousedown', this.onMouseDown)
+    this.canvas?.addEventListener('contextmenu', this.onContextMenu)
     this.listening = true
   }
 
@@ -66,6 +75,7 @@ export class Input {
       document.removeEventListener('visibilitychange', this.onVisibilityChange)
       this.canvas?.removeEventListener('mousemove', this.onMouseMove)
       this.canvas?.removeEventListener('mousedown', this.onMouseDown)
+      this.canvas?.removeEventListener('contextmenu', this.onContextMenu)
       this.listening = false
     }
 
@@ -96,6 +106,7 @@ export class Input {
   /** Clear frame transitions after update and rendering, preserving held keys. */
   endFrame(): void {
     this.clicks.length = 0
+    this.rightClicks.length = 0
     this.pressed.clear()
     this.released.clear()
     this.pressedShortcuts.clear()

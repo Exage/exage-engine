@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { BoxCollider, Engine, Entity, Input, Time, Vector2 } from '@/engine'
+import { boxPenetration, BoxCollider, Engine, Entity, Input, Time, Vector2 } from '@/engine'
 import type { Renderer } from '@/engine'
 import { GameScene } from '@/game/scenes/GameScene'
 import { Projectile } from '@/game/entities/Projectile'
@@ -9,6 +9,55 @@ import { demoLevel } from '@/game/levels/demoLevel'
 afterEach(() => vi.unstubAllGlobals())
 
 describe('GameScene integration', () => {
+  it('completes the demo patrol rectangle while staying inside the lower room', () => {
+    const scene = new GameScene(new Input(), new Time(), 800, 600)
+    scene.player.transform.position.set(3000, 1000)
+    const enemy = scene.enemies[1]!
+    const room = demoLevel.rooms.lowerRoom
+    const walls = scene.entities.filter((entity): entity is Wall => entity instanceof Wall)
+    const corners = new Set<string>()
+    for (let frame = 0; frame < 1500; frame++) {
+      scene.update(0.1)
+      const shape = enemy.hitboxes[0]!.shape
+      for (const wall of walls) {
+        expect(boxPenetration(shape, wall.collider.shape)).toBeNull()
+      }
+      const position = enemy.transform.position
+      expect(position.x).toBeGreaterThanOrEqual(room.x)
+      expect(position.y).toBeGreaterThanOrEqual(room.y)
+      expect(position.x + enemy.width).toBeLessThanOrEqual(room.x + room.width)
+      expect(position.y + enemy.height).toBeLessThanOrEqual(room.y + room.height)
+      if ((position.x < 700 || position.x > 1250) && (position.y < 660 || position.y > 900)) {
+        corners.add(`${position.x < 700 ? 'left' : 'right'}-${position.y < 660 ? 'top' : 'bottom'}`)
+      }
+    }
+    expect(corners.size).toBe(4)
+  })
+
+  it('runs patrols, freezes them on game over, and restores them on restart', () => {
+    const input = new Input()
+    const scene = new GameScene(input, new Time(), 800, 600)
+    const patroller = scene.enemies[1]!
+    const spawn = demoLevel.enemies[1]!
+    scene.player.transform.position.set(3000, 1000)
+    scene.update(0.5)
+    const walked = patroller.transform.position.clone()
+    expect(Math.hypot(walked.x - spawn.x, walked.y - spawn.y)).toBeCloseTo(50)
+    scene.projectiles.push(new Projectile(3020, 1020, 0, { owner: scene.enemies[0]! }))
+    scene.update(0)
+    expect(scene.isGameOver).toBe(true)
+    scene.update(1)
+    expect(patroller.transform.position).toEqual(walked)
+    vi.spyOn(input, 'wasPressed').mockImplementation((code) => code === 'KeyR')
+    scene.update(0)
+    const restarted = scene.enemies[1]!
+    expect(restarted.transform.position).toMatchObject({ x: spawn.x, y: spawn.y })
+    expect(restarted.config.behavior).toMatchObject(spawn.options!.behavior!)
+    scene.player.transform.position.set(3000, 1000)
+    scene.update(0.5)
+    expect(restarted.transform.position).toEqual(walked)
+  })
+
   it('approaches visible players and freezes pursuit after game over', () => {
     const scene = new GameScene(new Input(), new Time(), 800, 600)
     const enemy = scene.enemies[0]!
@@ -78,7 +127,11 @@ describe('GameScene integration', () => {
       demoLevel.enemies.map(({ x, y }) => ({ x, y }))
     )
     expect(scene.entities).toHaveLength(
-      demoLevel.floors.length + demoLevel.walls.length + demoLevel.enemies.length + 1
+      demoLevel.floors.length +
+        demoLevel.walls.length +
+        demoLevel.enemies.length +
+        scene.weapons.length +
+        1
     )
     expect(scene.camera.position).toMatchObject({
       x: Math.max(0, demoLevel.playerSpawn.x + 20 - 500),
@@ -237,7 +290,8 @@ describe('GameScene integration', () => {
     expect(scene.projectiles).toHaveLength(0)
     expect(scene.enemies.every((target) => !target.hit)).toBe(true)
 
-    scene.projectiles.push(new Projectile(1200, 344, Math.PI))
+    const targetY = enemy.transform.position.y + enemy.height / 2
+    scene.projectiles.push(new Projectile(1200, targetY, Math.PI))
     scene.update(0.3)
     expect(scene.projectiles).toHaveLength(0)
     expect(enemy.hit).toBe(true)
@@ -293,10 +347,31 @@ describe('GameScene integration', () => {
       expect(
         renderer.drawRectOutline.mock.calls.filter((call) => call[4] === '#00ff00')
       ).toHaveLength(demoLevel.walls.length + 2)
-      expect(
-        renderer.drawRectOutline.mock.calls.filter((call) => call[4] === '#c084fc')
-      ).toHaveLength(demoLevel.enemies.length + 1)
+      expect([
+        ...renderer.drawRectOutline.mock.calls.filter((call) => call[4] === '#c084fc'),
+        ...renderer.drawRotatedRectOutline.mock.calls.filter((call) => call[5] === '#c084fc'),
+      ]).toHaveLength(demoLevel.enemies.length + 1)
+      const rotatedEnemy = scene.enemies[0]!
+      const body = rotatedEnemy.hitboxes[0]!.shape
+      expect(renderer.drawRotatedRectOutline).toHaveBeenCalledWith(
+        body.x,
+        body.y,
+        body.width,
+        body.height,
+        rotatedEnemy.transform.rotation,
+        '#c084fc',
+        1
+      )
       expect(renderer.drawSector).toHaveBeenCalledTimes(scene.enemies.length)
+      const patrolArea = demoLevel.patrolAreas.lowerRoom
+      expect(renderer.drawRectOutline).toHaveBeenCalledWith(
+        patrolArea.x,
+        patrolArea.y,
+        patrolArea.width,
+        patrolArea.height,
+        '#38bdf8',
+        1
+      )
       for (const enemy of scene.enemies) {
         expect(renderer.drawSector).toHaveBeenCalledWith(
           enemy.transform.position.x + enemy.width / 2,
@@ -444,11 +519,11 @@ describe('GameScene integration', () => {
     } as unknown as Renderer
     scene.render(renderer)
     expect(calls.slice(-6)).toEqual([
-      'rectangle',
+      'Cmd+X: cheats',
       'rectangle',
       'FPS: 0',
       'Delta: 0.000 s',
-      `Entities: ${demoLevel.floors.length + demoLevel.walls.length + demoLevel.enemies.length + 1}`,
+      `Entities: ${demoLevel.floors.length + demoLevel.walls.length + demoLevel.enemies.length + scene.weapons.length + 1}`,
       `Player: ${demoLevel.playerSpawn.x.toFixed(1)}, ${demoLevel.playerSpawn.y.toFixed(1)}`,
     ])
     time.update(0)
@@ -461,7 +536,7 @@ describe('GameScene integration', () => {
       ['FPS: 50', 16, 16],
       ['Delta: 0.020 s', 16, 40],
       [
-        `Entities: ${demoLevel.floors.length + demoLevel.walls.length + demoLevel.enemies.length + 2}`,
+        `Entities: ${demoLevel.floors.length + demoLevel.walls.length + demoLevel.enemies.length + scene.weapons.length + 2}`,
         16,
         64,
       ],

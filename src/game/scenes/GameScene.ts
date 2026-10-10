@@ -6,17 +6,34 @@ import { Projectile } from '@/game/entities/Projectile'
 import { Player } from '@/game/entities/Player'
 import { Wall } from '@/game/entities/Wall'
 import { demoLevel } from '@/game/levels/demoLevel'
+import { Weapon } from '@/game/entities/Weapon'
+import { enemyTestLevel } from '@/game/levels/enemyTestLevel'
+import type { Level } from '@/game/levels/Level'
+import { CheatMenu } from '@/game/ui/CheatMenu'
 
-/** A room and outdoor targets with a following camera and screen-space diagnostics. */
+/** Playable demo and enemy test rooms with transferable weapons and diagnostics. */
 export class GameScene extends Scene {
   readonly enemies: Enemy[] = []
   readonly projectiles: Projectile[] = []
+  readonly weapons: Weapon[] = []
+  private level: Level = demoLevel
   readonly player: Player
   readonly camera: Camera2D
-  readonly worldWidth = 6000
-  readonly worldHeight = 2000
+  get worldWidth(): number {
+    return this.level.worldWidth
+  }
+
+  get worldHeight(): number {
+    return this.level.worldHeight
+  }
+
+  get isTestingEnemies(): boolean {
+    return this.level === enemyTestLevel
+  }
   private showColliders = false
   private gameOver = false
+  private paused = false
+  private readonly cheatMenu: CheatMenu | null
 
   get isGameOver(): boolean {
     return this.gameOver
@@ -32,30 +49,48 @@ export class GameScene extends Scene {
     this.input.bindShortcut('toggleColliders', 'KeyC', { metaKey: true })
     this.camera = new Camera2D(width, height)
     this.player = new Player(input, this.collisions)
+    this.cheatMenu =
+      import.meta.env.VITE_ENVIRONMENT === 'development' ? new CheatMenu(input, this.player) : null
     this.restart()
   }
 
   private restart(): void {
     this.gameOver = false
     this.player.controlsEnabled = true
+    this.player.weapon?.drop()
+    this.weapons.length = 0
     this.projectiles.length = 0
     this.enemies.length = 0
     this.entities.length = 0
     this.player.transform.rotation = 0
-    this.player.transform.position.set(demoLevel.playerSpawn.x, demoLevel.playerSpawn.y)
-    for (const { x, y, width, height, color } of demoLevel.floors) {
+    this.player.transform.position.set(this.level.playerSpawn.x, this.level.playerSpawn.y)
+    for (const { x, y, width, height, color } of this.level.floors) {
       this.add(new Floor(x, y, width, height, color))
     }
-    for (const { x, y, width: wallWidth, height: wallHeight } of demoLevel.walls) {
+    for (const { x, y, width: wallWidth, height: wallHeight } of this.level.walls) {
       this.add(new Wall(x, y, wallWidth, wallHeight))
     }
-    for (const { x, y, options } of demoLevel.enemies) {
+    for (const { x, y, options } of this.level.enemies) {
       const enemy = new Enemy(x, y, options)
       this.enemies.push(enemy)
       this.add(enemy)
+      if (enemy.weapon) {
+        this.addWeapon(enemy.weapon)
+      }
     }
+    for (const { x, y, options } of this.level.weapons) {
+      this.addWeapon(new Weapon(x, y, options))
+    }
+    const starter = new Weapon(0, 0, { ammo: 24, initialDelay: 0 })
+    starter.equip(this.player)
+    this.addWeapon(starter)
     this.add(this.player)
     this.updateCamera()
+  }
+
+  private addWeapon(weapon: Weapon): void {
+    this.weapons.push(weapon)
+    this.add(weapon)
   }
 
   override resize(width: number, height: number): void {
@@ -64,12 +99,38 @@ export class GameScene extends Scene {
   }
 
   override update(dt: number): void {
+    if (this.cheatMenu?.update(this.camera.width, this.camera.height)) {
+      return
+    }
+    if (this.input.wasPressed('Escape')) {
+      this.paused = !this.paused
+      return
+    }
+    if (this.paused) {
+      return
+    }
     if (this.input.wasShortcutPressed('toggleColliders')) {
       this.showColliders = !this.showColliders
     }
-    if (this.gameOver && this.input.wasPressed('KeyR')) {
+    if (this.input.wasPressed('F2')) {
+      this.level = this.isTestingEnemies ? demoLevel : enemyTestLevel
+      this.showColliders = this.isTestingEnemies
       this.restart()
       return
+    }
+    if ((this.gameOver || this.isTestingEnemies) && this.input.wasPressed('KeyR')) {
+      this.restart()
+      return
+    }
+    if (this.isTestingEnemies && !this.gameOver) {
+      for (const [index, station] of (this.level.stations ?? []).entries()) {
+        if (this.input.wasPressed(`Digit${index + 1}`)) {
+          this.player.transform.position.set(station.entry.x, station.entry.y)
+          this.projectiles.length = 0
+          this.updateCamera()
+          return
+        }
+      }
     }
     super.update(dt)
     const position = this.player.transform.position
@@ -82,17 +143,25 @@ export class GameScene extends Scene {
       this.player.aimAt(pointer.x + this.camera.position.x, pointer.y + this.camera.position.y)
     }
     if (!this.gameOver) {
+      this.player.weapon?.advance(dt)
+      if (this.input.rightClicks.length > 0) {
+        this.player.weapon?.drop()
+      }
+      if (this.input.wasPressed('KeyE')) {
+        const nearby = this.weapons
+          .filter((weapon) => weapon.canPickup(this.player, this.hitboxes))
+          .sort((a, b) => a.distanceTo(this.player) - b.distanceTo(this.player))[0]
+        if (nearby) {
+          this.player.weapon?.drop()
+          nearby.equip(this.player)
+        }
+      }
       for (const click of this.input.clicks) {
         this.player.aimAt(click.x + this.camera.position.x, click.y + this.camera.position.y)
-        const angle = this.player.transform.rotation
-        this.projectiles.push(
-          new Projectile(
-            position.x + this.player.width / 2,
-            position.y + this.player.height / 2,
-            angle,
-            { owner: this.player }
-          )
-        )
+        const projectile = this.player.weapon?.fire()
+        if (projectile) {
+          this.projectiles.push(projectile)
+        }
       }
     }
     for (let index = this.projectiles.length - 1; index >= 0; index--) {
@@ -103,12 +172,17 @@ export class GameScene extends Scene {
         ignore: projectile.owner ?? this.player,
         filter: (entity) => !enemyShot || !(entity instanceof Enemy),
       })
-      if (closest?.kind === 'hitbox' && enemyShot && closest.entity === this.player) {
-        this.gameOver = true
-        this.player.controlsEnabled = false
+      if (
+        closest?.kind === 'hitbox' &&
+        enemyShot &&
+        closest.entity === this.player &&
+        !this.gameOver
+      ) {
+        this.player.die()
+        this.gameOver = !this.player.controlsEnabled
       }
       if (closest?.kind === 'hitbox' && !enemyShot && closest.entity instanceof Enemy) {
-        closest.entity.hit = true
+        closest.entity.receiveHit()
       }
       const point = projectile.transform.position
       if (
@@ -124,12 +198,28 @@ export class GameScene extends Scene {
     }
     if (!this.gameOver) {
       for (const enemy of this.enemies) {
-        const projectile = enemy.attack(dt, this.player, this.hitboxes, this.collisions)
+        this.pickupEnemyWeapon(enemy)
+        const projectile = enemy.attack(dt, this.player, this.hitboxes, this.entities)
+        this.pickupEnemyWeapon(enemy)
         if (projectile) {
           this.projectiles.push(projectile)
         }
+        if (!this.player.controlsEnabled) {
+          this.gameOver = true
+          break
+        }
       }
     }
+  }
+
+  private pickupEnemyWeapon(enemy: Enemy): void {
+    if (!enemy.canEquipWeapon || enemy.weapon) {
+      return
+    }
+    const nearby = this.weapons
+      .filter((weapon) => weapon.ammo > 0 && weapon.canPickup(enemy, this.hitboxes, 48))
+      .sort((a, b) => a.distanceTo(enemy) - b.distanceTo(enemy))[0]
+    nearby?.equip(enemy)
   }
 
   private updateCamera(): void {
@@ -161,11 +251,40 @@ export class GameScene extends Scene {
         renderer.drawRect(startX, y, endX - startX, 1, '#304357')
       }
       super.render(renderer)
+      for (const [index, station] of (this.level.stations ?? []).entries()) {
+        renderer.drawText(`${index + 1}. ${station.type.toUpperCase()}`, station.x, station.y, {
+          fontSize: 24,
+          color: '#d6e7f5',
+        })
+        renderer.drawText(station.description, station.x, station.y + 36, {
+          fontSize: 12,
+          color: '#a9bdd1',
+        })
+        renderer.drawText('Enter here / weapon rack below', station.entry.x + 20, 930, {
+          align: 'center',
+          fontSize: 14,
+          color: '#a9bdd1',
+        })
+      }
+      if (this.isTestingEnemies) {
+        for (const enemy of this.enemies) {
+          const weapon = enemy.weapon
+          const bleeding = enemy.bleedRemaining
+          const status = bleeding !== null ? `bleeding ${bleeding.toFixed(1)}s` : enemy.activity
+          renderer.drawText(
+            `${enemy.config.type} / ${status} / HP ${enemy.health} / ${weapon ? `${weapon.ammo} rounds` : 'unarmed'}`,
+            enemy.transform.position.x + enemy.width / 2,
+            enemy.transform.position.y - 24,
+            { align: 'center', fontSize: 12, color: '#e3eaf2' }
+          )
+        }
+      }
       for (const projectile of this.projectiles) {
         projectile.render(renderer)
       }
       if (this.showColliders) {
         for (const enemy of this.enemies) {
+          enemy.renderPatrolArea(renderer)
           enemy.renderVision(renderer)
         }
         for (const entity of [...this.entities, ...this.projectiles]) {
@@ -195,6 +314,50 @@ export class GameScene extends Scene {
       renderer.setCamera(null)
     }
 
+    const weapon = this.player.weapon
+    const station = this.level.stations?.find(
+      (station) =>
+        this.player.transform.position.x >= station.x - 20 &&
+        this.player.transform.position.x <= station.x + 600
+    )
+    renderer.drawRect(
+      8,
+      this.camera.height - 108,
+      Math.min(660, this.camera.width - 16),
+      100,
+      '#101218'
+    )
+    renderer.drawText(
+      `${this.level.name}${station ? ` / ${station.type.toUpperCase()}` : ''} | ${weapon ? `${weapon.config.kind}: ${weapon.ammo} rounds` : 'Unarmed'}`,
+      16,
+      this.camera.height - 100,
+      {
+        color: '#f9df8d',
+        fontSize: 16,
+      }
+    )
+    renderer.drawText(
+      'WASD: move | LMB: fire | E: pick up / swap | RMB: drop',
+      16,
+      this.camera.height - 74,
+      { fontSize: 14 }
+    )
+    renderer.drawText(
+      this.isTestingEnemies
+        ? '1-5: test room | R: reset lab | F2: demo | Esc: pause'
+        : 'F2: enemy AI lab | Esc: pause | Cmd+C: vision / hitboxes',
+      16,
+      this.camera.height - 50,
+      { color: '#9aaec4', fontSize: 14 }
+    )
+
+    if (this.cheatMenu) {
+      renderer.drawText('Cmd+X: cheats', this.camera.width - 16, this.camera.height - 24, {
+        align: 'right',
+        color: '#9aaec4',
+        fontSize: 13,
+      })
+    }
     const { x, y } = this.player.transform.position
     renderer.drawRect(8, 8, 280, 104, '#101218')
     renderer.drawText(`FPS: ${this.time.fps.toFixed(0)}`, 16, 16)
@@ -202,9 +365,10 @@ export class GameScene extends Scene {
     renderer.drawText(`Entities: ${this.entities.length + this.projectiles.length}`, 16, 64)
     renderer.drawText(`Player: ${x.toFixed(1)}, ${y.toFixed(1)}`, 16, 88)
     if (this.showColliders) {
-      renderer.drawRect(8, 116, 400, 56, '#101218')
+      renderer.drawRect(8, 116, 400, 80, '#101218')
       renderer.drawText('Green: collider | Purple: hitbox', 16, 124)
       renderer.drawText('Vision: yellow idle | orange sees player', 16, 148)
+      renderer.drawText('Blue: patrol area', 16, 172)
     }
     if (this.gameOver) {
       renderer.drawRect(0, this.camera.height - 80, this.camera.width, 80, '#101218')
@@ -213,5 +377,23 @@ export class GameScene extends Scene {
         align: 'center',
       })
     }
+    if (this.paused) {
+      renderer.drawRect(0, 0, this.camera.width, this.camera.height, 'rgba(0, 0, 0, 0.65)')
+      renderer.drawText('Paused', this.camera.width / 2, this.camera.height / 2 - 32, {
+        fontSize: 32,
+        align: 'center',
+      })
+      renderer.drawText(
+        'Press [Esc] to resume',
+        this.camera.width / 2,
+        this.camera.height / 2 + 16,
+        {
+          fontSize: 16,
+          align: 'center',
+          color: '#9aaec4',
+        }
+      )
+    }
+    this.cheatMenu?.render(renderer, this.camera.width, this.camera.height)
   }
 }

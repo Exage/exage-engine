@@ -95,4 +95,4 @@ Read `wasShortcutPressed(action)` during update. Modifiers are captured at keydo
 
 ## Current scope
 
-Input handles keyboard events on `window`, rather than only on the Canvas. It does not filter text fields and only prevents default actions for registered shortcuts. Mouse movement and left clicks are tracked on the Canvas. Touch and gamepad support are not implemented.
+Input handles keyboard events on `window`, rather than only on the Canvas. It does not filter text fields and only prevents default actions for registered shortcuts. Mouse movement, left clicks, and right clicks are tracked on the Canvas. `pointer` contains the latest logical canvas position; `clicks` and `rightClicks` contain the respective frame click positions. `endFrame()`, focus loss, and stop clear both queues. The canvas context menu is suppressed while Input is listening. Touch and gamepad support are not implemented.
